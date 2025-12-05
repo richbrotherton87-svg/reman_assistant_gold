@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>All jobs</h1>
+{% if jobs %}
+    <table>
+        <tr><th>Job #</th><th>Customer</th><th>Engine</th><th>Status</th><th>Created</th><th></th></tr>
+        {% for job in jobs %}
+        <tr>
+            <td>{{ job.job_number }}</td>
+            <td>{{ job.customer_name }}</td>
+            <td>{{ job.engine_type }}</td>
+            <td>{{ job.status.value }}</td>
+            <td>{{ job.created_at.strftime('%Y-%m-%d') }}</td>
+            <td><a href="{{ url_for('job_detail', job_id=job.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No jobs yet.</p>
+{% endif %}
+{% endblock %}

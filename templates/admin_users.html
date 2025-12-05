@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Users</h1>
+
+<p><a class="button" href="{{ url_for('admin_create_user') }}">Create new user</a></p>
+
+{% if users %}
+    <table>
+        <tr><th>Username</th><th>Role</th><th>Created</th><th></th></tr>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.username }}</td>
+            <td>{{ u.role.value }}</td>
+            <td>{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+            <td>
+                {% if current_user.id != u.id %}
+                <form method="post" action="{{ url_for('admin_delete_user', user_id=u.id) }}" onsubmit="return confirm('Delete this user?');">
+                    <button type="submit">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No users yet.</p>
+{% endif %}
+{% endblock %}

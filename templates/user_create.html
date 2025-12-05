@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Create user</h1>
+    <div class="actions">
+        <a class="button secondary" href="{{ url_for('users_list') }}">
+            ← Back to users
+        </a>
+    </div>
+</div>
+
+<div class="card form-card">
+    <form method="post">
+        <div class="form-row">
+            <label for="username" class="field-label">Username</label>
+            <input
+                id="username"
+                name="username"
+                type="text"
+                class="text-input"
+                required
+            >
+        </div>
+
+        <div class="form-row">
+            <label for="password" class="field-label">Password</label>
+            <input
+                id="password"
+                name="password"
+                type="password"
+                class="text-input"
+                required
+            >
+        </div>
+
+        <div class="form-row">
+            <label for="role" class="field-label">Role</label>
+            <select
+                id="role"
+                name="role"
+                class="text-input"
+                required
+            >
+                {% for role in RoleEnum %}
+                    <option value="{{ role.value }}">{{ role.value }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-actions" style="margin-top: 1.5rem;">
+            <button type="submit" class="button primary">
+                Create user
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

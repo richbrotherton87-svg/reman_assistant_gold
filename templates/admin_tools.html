@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Admin tools</h1>
+
+<div class="grid-2">
+    <div class="card">
+        <h2>Test data</h2>
+        <p class="text-muted">
+            Generate dummy jobs for UI testing and demos.
+        </p>
+        <form
+            method="post"
+            action="{{ url_for('admin_generate_jobs') }}"
+            class="inline-form"
+        >
+            <label>
+                Number of jobs
+                <input
+                    type="number"
+                    name="count"
+                    value="5"
+                    min="1"
+                    style="max-width: 80px;"
+                >
+            </label>
+            <button type="submit" class="button">
+                Generate jobs
+            </button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Survey helpers</h2>
+        <p class="text-muted">
+            Use from a Job page for per-job actions, or use the random autofill
+            here for quick testing.
+        </p>
+        <form
+            method="post"
+            action="{{ url_for('admin_autofill_random_survey') }}"
+            class="inline-form"
+            onsubmit="return confirm('Auto-fill a random survey job for testing?');"
+        >
+            <button type="submit" class="button">
+                Autofill random survey job
+            </button>
+        </form>
+        <p class="text-muted" style="margin-top: 0.5rem;">
+            For a specific job, open its Job page and use the
+            <strong>Admin test actions</strong> card.
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Selective resets</h2>
+    <p class="text-muted">
+        These actions clear one category of data while leaving others intact.
+        Use with care – there is no undo.
+    </p>
+
+    <div class="actions">
+        <form
+            method="post"
+            action="{{ url_for('admin_wipe_jobs') }}"
+            class="inline-form"
+            onsubmit="return confirm('Delete ALL jobs, surveys, parts and attachments?');"
+        >
+            <button type="submit" class="button">
+                Wipe all jobs
+            </button>
+        </form>
+
+        <form
+            method="post"
+            action="{{ url_for('admin_wipe_templates') }}"
+            class="inline-form"
+            onsubmit="return confirm('Delete ALL templates and template lines?');"
+        >
+            <button type="submit" class="button">
+                Wipe all templates
+            </button>
+        </form>
+
+        <form
+            method="post"
+            action="{{ url_for('admin_wipe_stores') }}"
+            class="inline-form"
+            onsubmit="return confirm('Delete ALL store items?');"
+        >
+            <button type="submit" class="button">
+                Wipe all stores
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Danger zone – full wipe</h2>
+    <p class="text-muted">
+        This will remove all jobs, surveys, parts, templates, stores and users
+        (except the currently logged-in admin). Only use when you really want a
+        clean slate.
+    </p>
+    <form
+        method="post"
+        action="{{ url_for('admin_wipe') }}"
+        onsubmit="return confirm('FULL WIPE: Are you absolutely sure? This cannot be undone.');"
+    >
+        <button type="submit" class="button">
+            Full wipe (everything)
+        </button>
+    </form>
+</div>
+{% endblock %}

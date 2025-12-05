@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set can_edit_parts = current_user.role.value in ['Admin', 'Office'] %}
+
+<h1>Parts list – Job {{ job.job_number }}</h1>
+
+{# Job info pills (same style as survey) #}
+<div class="view-switch-bar">
+    <div class="view-switch-left">
+        <span class="job-pill">Job {{ job.job_number }}</span>
+        {% if job.engine_type %}
+            <span class="job-pill">Engine: {{ job.engine_type }}</span>
+        {% endif %}
+        {% if job.customer_name %}
+            <span class="job-pill">Customer: {{ job.customer_name }}</span>
+        {% endif %}
+        <span class="job-pill">Status: {{ job.status.value }}</span>
+    </div>
+
+    <div class="view-switch-right">
+        <a href="{{ url_for('job_detail', job_id=job.id) }}" class="view-pill">
+            ← Back to job
+        </a>
+    </div>
+</div>
+
+{% if parts|length == 0 %}
+    <div class="card">
+        <p>No parts have been generated for this job yet.</p>
+        <p class="text-muted">
+            Once the survey is completed and converted to a BOM, the lines will appear here.
+        </p>
+    </div>
+{% else %}
+
+<form method="post" class="survey-form">
+
+    <div class="card">
+        <table class="strip-survey-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Pos</th>
+                    <th>Part no</th>
+                    <th style="width: 30%;">Name</th>
+                    <th>Required qty</th>
+                    <th>Stock status</th>
+                    <th>Supplier</th>
+                    <th>PO no.</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for part in parts %}
+                    <tr class="part-row">
+                        <td>{{ part.section or "—" }}</td>
+                        <td>{{ part.pos or "—" }}</td>
+                        <td>{{ part.part_no or "—" }}</td>
+                        <td>
+                            <span class="name-text"
+                                  style="display:inline-block;
+                                         max-width:100%;
+                                         white-space:nowrap;
+                                         overflow:hidden;
+                                         text-overflow:ellipsis;">
+                                {{ part.name or "—" }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <input
+                                type="number"
+                                name="qty_{{ part.id }}"
+                                min="0"
+                                class="qty-required"
+                                value="{{ part.qty_required if part.qty_required is not none else 1 }}"
+                                {% if not can_edit_parts %}readonly{% endif %}
+                            >
+                        </td>
+
+                        <td>
+                            {% set current = part.stock_status.value if part.stock_status else "" %}
+                            <select name="stock_{{ part.id }}" {% if not can_edit_parts %}disabled{% endif %}>
+                                <option value="">—</option>
+                                <option value="pending"
+                                    {% if current == "pending" %}selected{% endif %}>
+                                    Pending
+                                </option>
+                                <option value="to_order"
+                                    {% if current == "to_order" %}selected{% endif %}>
+                                    To order
+                                </option>
+                                <option value="ordered"
+                                    {% if current == "ordered" %}selected{% endif %}>
+                                    Ordered
+                                </option>
+                                <option value="received"
+                                    {% if current == "received" %}selected{% endif %}>
+                                    Received
+                                </option>
+                                <option value="in_stock"
+                                    {% if current == "in_stock" %}selected{% endif %}>
+                                    In stock
+                                </option>
+                                <option value="fitted"
+                                    {% if current == "fitted" %}selected{% endif %}>
+                                    Fitted
+                                </option>
+                                <option value="not_required"
+                                    {% if current == "not_required" %}selected{% endif %}>
+                                    Not required
+                                </option>
+                            </select>
+                        </td>
+
+                        <td>
+                            <input
+                                type="text"
+                                name="supplier_{{ part.id }}"
+                                value="{{ part.supplier or '' }}"
+                                {% if not can_edit_parts %}readonly{% endif %}
+                            >
+                        </td>
+
+                        <td>
+                            <input
+                                type="text"
+                                name="po_{{ part.id }}"
+                                value="{{ part.po_number or '' }}"
+                                {% if not can_edit_parts %}readonly{% endif %}
+                            >
+                        </td>
+
+                        <td>
+                            <input
+                                type="text"
+                                name="notes_{{ part.id }}"
+                                value="{{ part.notes or '' }}"
+                                {% if not can_edit_parts %}readonly{% endif %}
+                            >
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="actions">
+        {% if can_edit_parts %}
+            <button type="submit" class="primary">
+                Save parts list
+            </button>
+        {% endif %}
+    </div>
+</form>
+
+{% endif %}
+
+{% endblock %}

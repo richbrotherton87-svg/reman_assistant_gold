@@ -1,0 +1,75 @@
+{# templates/parts_row.html #}
+<tr class="part-row">
+    <td class="lock-cell"></td>
+
+    <td class="partno-cell">
+        <span class="partno-value">{{ part.part_no or "" }}</span>
+    </td>
+
+    <td class="name-cell">
+        {{ part.name or "" }}
+    </td>
+
+    <td class="qty-cell text-end">
+        <input
+            type="number"
+            name="qty_{{ part.id }}"
+            value="{{ part.qty_required or 0 }}"
+            class="notes-input"
+            style="max-width: 80px; text-align: right;"
+        >
+    </td>
+
+    <td class="stock-cell text-end">
+        {% set si = store_info.get(part.id) %}
+        {% if si %}
+            {{ si.stock }}
+        {% else %}
+            —
+        {% endif %}
+    </td>
+
+    <td class="status-cell">
+        <div class="status-wrapper">
+            <select
+                name="stock_status_{{ part.id }}"
+                class="status-select"
+                style="min-width: 140px;"
+            >
+                {% for status in StockStatusEnum %}
+                    <option value="{{ status.value }}"
+                            {% if part.stock_status == status %}selected{% endif %}>
+                        {{ status.value }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </td>
+
+    <td>
+        <input
+            type="text"
+            name="supplier_{{ part.id }}"
+            value="{{ part.supplier or '' }}"
+            class="notes-input"
+        >
+    </td>
+
+    <td>
+        <input
+            type="text"
+            name="po_number_{{ part.id }}"
+            value="{{ part.po_number or '' }}"
+            class="notes-input"
+        >
+    </td>
+
+    <td>
+        <input
+            type="text"
+            name="notes_{{ part.id }}"
+            value="{{ part.notes or '' }}"
+            class="notes-input"
+        >
+    </td>
+</tr>

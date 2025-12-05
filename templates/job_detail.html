@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Job {{ job.job_number }}</h1>
+
+<div class="card">
+    <p><strong>Customer:</strong> {{ job.customer_name or "—" }}</p>
+    <p><strong>Engine:</strong> {{ job.engine_type or "—" }}</p>
+    <p><strong>Serial no:</strong> {{ job.serial_number or "—" }}</p>
+
+    {% if job.template %}
+        <p><strong>Template:</strong> {{ job.template.name }}</p>
+    {% endif %}
+
+    {% if job.assigned_to %}
+        <p><strong>Assigned to:</strong> {{ job.assigned_to.username }} ({{ job.assigned_to.role.value }})</p>
+    {% else %}
+        <p><strong>Assigned to:</strong> Unassigned</p>
+    {% endif %}
+
+    <p>
+        <strong>Status:</strong>
+        <span class="status-pill status-{{ job.status.value }}">
+            {{ job.status.value | replace('_', ' ') | title }}
+        </span>
+    </p>
+
+    <p><strong>Created:</strong> {{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    <p><strong>Updated:</strong> {{ job.updated_at.strftime('%Y-%m-%d %H:%M') if job.updated_at else "—" }}</p>
+</div>
+
+<div class="grid-3">
+    <div class="card">
+        <h2>Strip survey</h2>
+        <p>{{ survey_items|length }} line{{ '' if survey_items|length == 1 else 's' }}</p>
+        <a class="button" href="{{ url_for('job_survey', job_id=job.id) }}">
+            Open survey
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Parts list</h2>
+        <p>{{ parts|length }} part{{ '' if parts|length == 1 else 's' }}</p>
+        <a class="button" href="{{ url_for('job_parts', job_id=job.id) }}">
+            Open parts list
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Build &amp; notes</h2>
+        <p>Build status: {{ job.status.value }}</p>
+        <a class="button" href="{{ url_for('job_build', job_id=job.id) }}">
+            Open build view
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Attachments &amp; export</h2>
+    <p>
+        {{ attachments|length }} file{{ '' if attachments|length == 1 else 's' }} attached
+    </p>
+
+    <div class="actions">
+        <a class="button" href="{{ url_for('job_attachments', job_id=job.id) }}">
+            View / upload files
+        </a>
+
+        {% if current_user.role.value in ['Admin', 'Office'] %}
+            <a class="button" href="{{ url_for('job_export', job_id=job.id) }}">
+                Export job pack (ZIP)
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{# Optional: keep admin helpers, but ONLY if you really want them #}
+{# 
+{% if current_user.role.value == 'Admin' %}
+<div class="card">
+    <h2>Admin test actions</h2>
+    <p class="text-muted">
+        Handy helpers for demos and testing. These only affect this job.
+    </p>
+    <div class="actions">
+        <form
+            method="post"
+            action="{{ url_for('admin_autofill_survey', job_id=job.id) }}"
+            class="inline-form"
+            onsubmit="return confirm('Auto-fill this survey for testing?');"
+        >
+            <button type="submit" class="button">
+                Auto-fill survey for testing
+            </button>
+        </form>
+
+        <form
+            method="post"
+            action="{{ url_for('admin_mark_all_good', job_id=job.id) }}"
+            class="inline-form"
+            onsubmit="return confirm('Mark ALL survey lines as Good for this job?');"
+        >
+            <button type="submit" class="button">
+                Mark all survey lines Good
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+#}
+
+{% endblock %}

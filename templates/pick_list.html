@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Pick list – Job {{ job.job_number }}</h1>
+
+<div class="view-switch-bar">
+    <div class="view-switch-left">
+        <span class="job-pill">Job {{ job.job_number }}</span>
+        {% if job.engine_type %}
+            <span class="job-pill">Engine: {{ job.engine_type }}</span>
+        {% endif %}
+        {% if job.customer_name %}
+            <span class="job-pill">Customer: {{ job.customer_name }}</span>
+        {% endif %}
+    </div>
+
+    <div class="view-switch-right">
+        <a href="{{ url_for('job_parts', job_id=job.id) }}" class="view-pill">
+            ← Back to parts
+        </a>
+    </div>
+</div>
+
+{% if not pick_items %}
+    <div class="card">
+        <p>No items to pick.</p>
+    </div>
+{% else %}
+    <div class="card">
+        <table class="strip-survey-table parts-table">
+            <thead>
+                <tr>
+                    <th style="width: 160px;">Part no</th>
+                    <th>Name</th>
+                    <th style="width: 120px;">Bin</th>
+                    <th style="width: 80px;">Qty</th>
+                    <th style="width: 80px;">Picked</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pick_items %}
+                    <tr>
+                        <td class="partno-cell">{{ item.part_no }}</td>
+                        <td class="name-cell">{{ item.name }}</td>
+                        <td class="engine-cell small">
+                            {{ item.bin or "—" }}
+                        </td>
+                        <td class="qty-cell text-end">
+                            {{ item.total_qty }}
+                        </td>
+                        <td class="text-center">
+                            <input type="checkbox">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="actions" style="margin-top: 1.5rem; display:flex; gap:1rem;">
+        <button type="button" onclick="window.print()" class="primary">
+            Print pick list
+        </button>
+        <button type="button"
+                onclick="window.location='{{ url_for('job_parts', job_id=job.id) }}'">
+            ← Back to parts
+        </button>
+    </div>
+{% endif %}
+
+{% endblock %}

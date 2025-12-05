@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Reman Lean App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="brand">Reman Lean App</div>
+
+        <nav class="nav">
+            {% if current_user %}
+                {% set role = current_user.role.value %}
+
+                {# -------- Main nav by role -------- #}
+
+                {# Admin + Office: full job + stores tooling #}
+                {% if role in ['Admin', 'Office'] %}
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('jobs_list') }}">All Jobs</a>
+                    <a href="{{ url_for('job_create') }}">Create Job</a>
+                    <a href="{{ url_for('templates_list') }}">Templates</a>
+                    <a href="{{ url_for('stores_hub', view='per_engine') }}">Stores</a>
+
+                {# Stores: only Stores hub, no jobs/dashboard #}
+                {% elif role == 'Stores' %}
+                    <a href="{{ url_for('stores_hub', view='master') }}">Stores</a>
+
+                {# Technicians (and any other roles): jobs only #}
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                    <a href="{{ url_for('jobs_list') }}">All Jobs</a>
+                {% endif %}
+
+                {# -------- Admin dropdown -------- #}
+                {% if role == 'Admin' %}
+                    <div class="nav-admin-dropdown">
+                        <button class="nav-admin-trigger" type="button">
+                            Admin ▾
+                        </button>
+                        <div class="nav-admin-menu">
+                            <a href="{{ url_for('users_list') }}">Users</a>
+                            {#
+                             Extra admin tools can be re-enabled once routes exist
+
+                             <a href="{{ url_for('admin_tools') }}">Admin tools</a>
+
+                             <form
+                                 method="post"
+                                 action="{{ url_for('admin_autofill_random_survey') }}"
+                                 class="nav-admin-form"
+                             >
+                                 <button type="submit">Autofill random survey</button>
+                             </form>
+                            #}
+                        </div>
+                    </div>
+                {% endif %}
+
+                {# -------- User pill + logout -------- #}
+                <span class="user-pill">
+                    {{ current_user.username }} ({{ current_user.role.value }})
+                </span>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-container">
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

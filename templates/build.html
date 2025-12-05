@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Build view – Job {{ job.job_number }}</h1>
+
+<div class="card">
+    <p><strong>Customer:</strong> {{ job.customer_name }}</p>
+    <p><strong>Engine:</strong> {{ job.engine_type }}</p>
+    <p><strong>Status:</strong> {{ job.status.value }}</p>
+</div>
+
+<h2>Parts overview</h2>
+{% if parts %}
+    <table>
+        <tr><th>Part no</th><th>Name</th><th>Qty</th><th>Status</th></tr>
+        {% for part in parts %}
+        <tr>
+            <td>{{ part.part_no }}</td>
+            <td>{{ part.name }}</td>
+            <td>{{ part.qty_required }}</td>
+            <td>{{ part.stock_status.value }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p>No parts for this job.</p>
+{% endif %}
+
+<h2>Build notes</h2>
+<form method="post">
+    <textarea name="build_notes" rows="6" cols="80">{{ job.build_notes or '' }}</textarea>
+    <div class="actions">
+        <button type="submit" name="action" value="save">Save notes</button>
+        {% if job.status.value == 'build' %}
+            <button type="submit" name="action" value="complete_build" class="primary">
+                Mark build complete
+            </button>
+        {% endif %}
+    </div>
+</form>
+{% endblock %}

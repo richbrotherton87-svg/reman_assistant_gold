@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card narrow">
+    <h2>Login</h2>
+    <form method="post">
+        <label>Username
+            <input type="text" name="username" autofocus required>
+        </label>
+        <label>Password
+            <input type="password" name="password" required>
+        </label>
+        <button type="submit">Login</button>
+        <p class="hint">Default admin is <strong>admin / admin</strong> on first run.</p>
+    </form>
+</div>
+{% endblock %}

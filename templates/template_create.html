@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card narrow">
+    <h2>Create template</h2>
+    <form method="post">
+        <label>Template name
+            <input type="text" name="name" required>
+        </label>
+        <label>Engine type (optional)
+            <input type="text" name="engine_type">
+        </label>
+        <button type="submit">Create template</button>
+    </form>
+</div>
+{% endblock %}

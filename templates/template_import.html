@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Import template lines – {{ template.name }}</h1>
+    <p>Engine type: {{ template.engine_type or "Generic" }}</p>
+</div>
+
+<div class="card">
+    <p>
+        Upload a <strong>.csv</strong> or <strong>.xlsx</strong> file to replace
+        the lines for this template.
+    </p>
+    <p>
+        Expected columns (case-insensitive):
+        <code>Section</code>, <code>Pos</code>, <code>Part No</code>, <code>Name</code>, <code>Qty</code>.
+        Optional: <code>Always replace</code>, <code>In kit</code>,
+        <code>Requires measurement</code>, <code>Meas label</code>, <code>Unit</code>, <code>Min</code>, <code>Max</code>.
+    </p>
+
+    <form method="post" enctype="multipart/form-data" style="margin-top: 1.5rem;">
+        <div style="margin-bottom: 1rem;">
+            <input type="file" name="file" accept=".csv,.xlsx,.xls" required>
+        </div>
+        <button type="submit" class="button">
+            Upload &amp; replace lines
+        </button>
+        <a href="{{ url_for('template_edit', template_id=template.id) }}" class="button secondary">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

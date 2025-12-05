@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1 class="page-title">Dashboard</h1>
+
+  <div class="dashboard-columns">
+
+    {# ───── Pre-survey ───── #}
+    <section class="dashboard-section">
+      <div class="dashboard-section-header">
+        <h2>Pre-survey</h2>
+        <span class="dashboard-count-pill">{{ pre_survey_jobs|length }}</span>
+      </div>
+      {% if pre_survey_jobs %}
+        {% for job in pre_survey_jobs %}
+          {{ job_card(job,
+                      'Open job',
+                      url_for('job_detail', job_id=job.id),
+                      'pre_survey') }}
+        {% endfor %}
+      {% else %}
+        <p class="dashboard-empty">No jobs currently in pre-survey.</p>
+      {% endif %}
+    </section>
+
+    {# ───── In survey ───── #}
+    <section class="dashboard-section">
+      <div class="dashboard-section-header">
+        <h2>In survey</h2>
+        <span class="dashboard-count-pill">{{ survey_jobs|length }}</span>
+      </div>
+      {% if survey_jobs %}
+        {% for job in survey_jobs %}
+          {{ job_card(job,
+                      'Open strip survey',
+                      url_for('job_survey', job_id=job.id),
+                      'survey') }}
+        {% endfor %}
+      {% else %}
+        <p class="dashboard-empty">No jobs currently in survey.</p>
+      {% endif %}
+    </section>
+
+    {# ───── Office ───── #}
+    <section class="dashboard-section">
+      <div class="dashboard-section-header">
+        <h2>Office</h2>
+        <span class="dashboard-count-pill">{{ office_jobs|length }}</span>
+      </div>
+      {% if office_jobs %}
+        {% for job in office_jobs %}
+          {{ job_card(job,
+                      'Open parts list',
+                      url_for('job_parts', job_id=job.id),
+                      'office') }}
+        {% endfor %}
+      {% else %}
+        <p class="dashboard-empty">No jobs currently in office stage.</p>
+      {% endif %}
+    </section>
+
+    {# ───── Build ───── #}
+    <section class="dashboard-section">
+      <div class="dashboard-section-header">
+        <h2>Build</h2>
+        <span class="dashboard-count-pill">{{ build_jobs|length }}</span>
+      </div>
+      {% if build_jobs %}
+        {% for job in build_jobs %}
+          {{ job_card(job,
+                      'Open build view',
+                      url_for('job_build', job_id=job.id),
+                      'build') }}
+        {% endfor %}
+      {% else %}
+        <p class="dashboard-empty">No jobs currently in build.</p>
+      {% endif %}
+    </section>
+
+    {# ───── Complete ───── #}
+    <section class="dashboard-section">
+      <div class="dashboard-section-header">
+        <h2>Complete</h2>
+        <span class="dashboard-count-pill">{{ complete_jobs|length }}</span>
+      </div>
+      {% if complete_jobs %}
+        {% for job in complete_jobs %}
+          {{ job_card(job,
+                      'View job pack',
+                      url_for('job_pack', job_id=job.id),
+                      'complete') }}
+        {% endfor %}
+      {% else %}
+        <p class="dashboard-empty">No jobs marked complete.</p>
+      {% endif %}
+    </section>
+
+  </div>
+{% endblock %}
+
+{# ──────────────────────────────────────────
+   Job card macro – one layout for all stages
+   ────────────────────────────────────────── #}
+{% macro job_card(job, primary_label, primary_url, stage_key) %}
+  <div class="job-card">
+
+    {# 1) Status pills – centred at top #}
+    <div class="job-progress-row">
+      <div class="job-progress">
+        {% set steps = [
+          ('pre_survey', 'Pre-survey'),
+          ('survey', 'Survey'),
+          ('office', 'Office'),
+          ('build', 'Build'),
+          ('test', 'Test'),
+          ('pdi', 'PDI'),
+          ('complete', 'Complete')
+        ] %}
+        {% for key, label in steps %}
+          <span class="job-progress-step{% if key == stage_key %} is-current{% endif %}">
+            {{ label }}
+          </span>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# 2) Body – info left, thumbnail right #}
+    <div class="job-card-body">
+      <div class="job-card-main">
+
+        <div class="job-card-title-row">
+          <a href="{{ primary_url }}" class="job-title-link">
+            Job {{ job.job_number }}
+          </a>
+          <span class="job-stage-chip">
+            {{ stage_key.replace('_', ' ')|title }}
+          </span>
+        </div>
+
+        <div class="job-meta-grid-compact">
+          <div class="job-meta-item">
+            <span class="job-meta-label">Customer</span>
+            <span class="job-meta-value">{{ job.customer_name or '—' }}</span>
+          </div>
+
+          <div class="job-meta-item">
+            <span class="job-meta-label">Tech</span>
+            <span class="job-meta-value">
+              {% if job.assigned_to %}
+                {{ job.assigned_to.username }}
+              {% else %}
+                Unassigned
+              {% endif %}
+            </span>
+          </div>
+
+          <div class="job-meta-item">
+            <span class="job-meta-label">Engine</span>
+            <span class="job-meta-value">
+              {{ job.engine_type or 'Unknown engine' }}
+            </span>
+          </div>
+
+          <div class="job-meta-item">
+            <span class="job-meta-label">Date in</span>
+            <span class="job-meta-value">
+              {% if job.created_at %}
+                {{ job.created_at.strftime('%Y-%m-%d') }}
+              {% else %}
+                —
+              {% endif %}
+            </span>
+          </div>
+        </div>
+
+        <div class="job-next-row">
+          <span class="job-meta-label">Next</span>
+          <span class="job-meta-value">
+            {% if job.next_action %}
+              {{ job.next_action }}
+            {% elif stage_key == 'pre_survey' %}
+              Start strip survey
+            {% elif stage_key == 'survey' %}
+              Complete survey &amp; send to office
+            {% elif stage_key == 'office' %}
+              Complete parts list &amp; order parts
+            {% elif stage_key == 'build' %}
+              Build &amp; test engine
+            {% else %}
+              —
+            {% endif %}
+          </span>
+        </div>
+
+        <div class="job-actions-row">
+          <a href="{{ primary_url }}" class="button primary">
+            {{ primary_label }}
+          </a>
+          <a href="{{ url_for('job_pack', job_id=job.id) }}" class="button">
+            View job pack
+          </a>
+        </div>
+      </div>
+
+      <div class="job-card-thumb-wrap">
+        <div class="job-thumb job-thumb-tall">
+          {{ job.engine_type or 'Engine' }}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endmacro %}

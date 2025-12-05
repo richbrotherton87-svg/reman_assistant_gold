@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Upload template from spreadsheet</h2>
+    <p>
+        Upload an Excel (<code>.xlsx</code>, <code>.xls</code>) or CSV (<code>.csv</code>) file
+        with the following columns (headers, any order, case-insensitive):
+    </p>
+    <ul>
+        <li><code>section</code></li>
+        <li><code>pos</code> (numeric)</li>
+        <li><code>part_no</code></li>
+        <li><code>name</code></li>
+        <li><code>qty</code> (numeric)</li>
+    </ul>
+
+    <form method="post" enctype="multipart/form-data">
+        <label>Template name
+            <input type="text" name="name" placeholder="If blank, filename will be used">
+        </label>
+        <label>Engine type (optional)
+            <input type="text" name="engine_type" placeholder="e.g. Steyr M16, MAN D0836">
+        </label>
+        <label>Spreadsheet file
+            <input type="file" name="file" accept=".xlsx,.xls,.csv" required>
+        </label>
+        <div class="actions">
+            <button type="submit" class="primary">Upload and create template</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

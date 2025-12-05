@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Templates</h1>
+    <div class="actions">
+        <a class="button primary" href="{{ url_for('template_create') }}">
+            + Create template
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    {% if templates %}
+        <table class="strip-survey-table templates-table">
+            <thead>
+                <tr>
+                    <th style="width:70px;">ID</th>
+                    <th>Name</th>
+                    <th style="width:180px;">Engine type</th>
+                    <th style="width:140px;">Created</th>
+                    <th style="width:140px;">Updated</th>
+                    <th style="width:150px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in templates %}
+                    <tr>
+                        <td>{{ t.id }}</td>
+                        <td>{{ t.name }}</td>
+                        <td>{{ t.engine_type or "—" }}</td>
+                        <td>
+                            {{ t.created_at.strftime("%Y-%m-%d") if t.created_at else "—" }}
+                        </td>
+                        <td>
+                            {{ t.updated_at.strftime("%Y-%m-%d") if t.updated_at else "—" }}
+                        </td>
+                        <td>
+                            {# Main action: edit template lines #}
+                            <a
+                                class="button"
+                                href="{{ url_for('template_edit', template_id=t.id) }}"
+                                style="padding:0.25rem 0.7rem; font-size:0.8rem;"
+                            >
+                                Edit
+                            </a>
+
+                            {# We REMOVE the old Stores link that pointed to a non-existent route:
+                               href="{{ url_for('stores_template', template_id=t.id) }}"
+                               When we add a real stores-per-template view, we can wire it back in.
+                            #}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No templates yet. Click <strong>“Create template”</strong> to add one.</p>
+    {% endif %}
+</div>
+{% endblock %}

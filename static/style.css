@@ -1,0 +1,2122 @@
+/* ================================================================== */
+/*  REMAN APP – TIDY DARK THEME STYLESHEET                            */
+/*  - Prussian blue shell                                             */
+/*  - Classic + split survey layouts                                  */
+/*  - Stores, parts, templates, admin                                 */
+/* ================================================================== */
+
+/* ---------------------- Design tokens ----------------------------- */
+
+:root {
+    --bg-base: #020617;          /* near-black blue */
+    --bg-elevated: #02091c;
+    --bg-card: #0b1120;
+    --bg-card-soft: #111827;
+    --bg-section-header: #020617;
+    --bg-table-header: #0f172a;
+
+    --border-subtle: #1f2937;
+    --border-strong: #334155;
+
+    --accent: #2563eb;
+    --accent-soft: #1d4ed8;
+    --accent-faint: #1e293b;
+
+    --text-main: #e5e7eb;
+    --text-soft: #9ca3af;
+    --text-muted: #6b7280;
+
+    --danger: #f97373;
+    --success: #4ade80;
+    --warning: #facc15;
+
+    --radius-lg: 16px;
+    --radius-md: 10px;
+    --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.55);
+
+    --gap-1: 4px;
+    --gap-2: 8px;
+    --gap-3: 12px;
+    --gap-4: 16px;
+    --gap-5: 24px;
+    --gap-6: 32px;
+}
+
+/* ---------------------- Base layout ------------------------------- */
+
+html,
+body {
+    margin: 0;
+    background: var(--bg-base);
+    color: var(--text-main);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                 "Segoe UI", sans-serif;
+}
+
+main,
+.page-content,
+.content-wrapper {
+    max-width: 1200px;
+    margin: var(--gap-5) auto var(--gap-6);
+    padding: 0 var(--gap-4);
+}
+
+/* Utility container if used */
+.container {
+    max-width: 1100px;
+    margin: 1.5rem auto 2rem;
+    padding: 0 1rem;
+}
+
+/* ---------------------- Top bar / nav ----------------------------- */
+
+.top-bar,
+body > header,
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: #020617;
+    color: #f9fafb;
+    border-bottom: 1px solid var(--border-subtle);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.brand,
+body > header .app-title,
+.navbar .app-title {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+
+.nav a,
+.navbar a,
+body > header nav a {
+    color: var(--text-soft);
+    padding: 0.35rem 0.9rem;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.nav a:hover,
+.navbar a:hover,
+body > header nav a:hover {
+    background: var(--accent-faint);
+    color: var(--text-main);
+}
+
+.user-pill {
+    margin-left: 1rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    background: #374151;
+    font-size: 0.85rem;
+}
+
+/* Admin dropdown in top nav */
+.nav-admin-dropdown {
+    position: relative;
+    display: inline-block;
+    margin-left: 1rem;
+}
+
+.nav-admin-trigger {
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    background: #020617;
+    color: var(--text-soft);
+    padding: 0.35rem 0.9rem;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.nav-admin-trigger:hover {
+    background: var(--accent-faint);
+    color: var(--text-main);
+}
+
+.nav-admin-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 110%;
+    min-width: 220px;
+    background: #020617;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-soft);
+    padding: 0.4rem 0;
+    z-index: 50;
+}
+
+.nav-admin-dropdown:hover .nav-admin-menu {
+    display: block;
+}
+
+.nav-admin-menu a,
+.nav-admin-menu button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    border: none;
+    background: transparent;
+    color: var(--text-soft);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.nav-admin-menu a:hover,
+.nav-admin-menu button:hover {
+    background: #020b1f;
+    color: var(--text-main);
+}
+
+.nav-admin-form {
+    margin: 0;
+}
+
+/* ---------------------- Page header / actions --------------------- */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--gap-3);
+    margin-bottom: var(--gap-4);
+}
+
+.page-header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: 0.03em;
+}
+
+.page-header .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.page-header .actions .button.secondary {
+    background: transparent;
+    border-color: var(--border-subtle);
+    color: var(--text-soft);
+}
+
+.page-header .actions .button.secondary:hover {
+    background: var(--accent-faint);
+    color: var(--text-main);
+}
+
+/* ---------------------- Cards / panels / grids -------------------- */
+
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-soft);
+    padding: var(--gap-4);
+    margin-bottom: var(--gap-4);
+}
+
+.card.narrow {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.card h2 {
+    margin-top: 0;
+    margin-bottom: var(--gap-3);
+    font-size: 1.05rem;
+}
+
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.grid-6 {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--gap-2);
+}
+
+.add-row-panel {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--gap-2);
+    margin-bottom: var(--gap-4);
+}
+
+/* ---------------------- Flash messages ---------------------------- */
+
+.flash,
+.alert {
+    border-radius: var(--radius-md);
+    padding: 0.6rem 0.9rem;
+    font-size: 0.85rem;
+    margin-bottom: var(--gap-3);
+}
+
+.flash-success {
+    background: rgba(22, 163, 74, 0.12);
+    border: 1px solid #22c55e;
+    color: #bbf7d0;
+}
+
+.flash-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid #ef4444;
+    color: #fecaca;
+}
+
+.flash-warning {
+    background: rgba(234, 179, 8, 0.14);
+    border: 1px solid #facc15;
+    color: #fef9c3;
+}
+
+.flash-info {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+/* ---------------------- Forms / inputs / buttons ------------------ */
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-soft);
+}
+
+label input,
+label select {
+    margin-top: 0.15rem;
+}
+
+.hint,
+.help-text {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="file"],
+select,
+textarea {
+    background: #020617;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    padding: 0.35rem 0.7rem;
+    color: var(--text-main);
+    font-size: 0.9rem;
+    outline: none;
+    min-height: 32px;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+textarea {
+    resize: vertical;
+    border-radius: var(--radius-md);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.55);
+}
+
+/* Base buttons */
+button,
+.button,
+.actions button {
+    border-radius: 999px;
+    border: 1px solid transparent;
+    padding: 0.45rem 1.15rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: var(--accent-soft);
+    color: #f9fafb;
+    cursor: pointer;
+    margin-right: 0.4rem;
+    transition: background 0.12s ease, transform 0.06s ease,
+                box-shadow 0.12s ease;
+}
+
+button.primary,
+.actions .primary {
+    background: linear-gradient(135deg, #2563eb, #38bdf8);
+    border-color: #2563eb;
+}
+
+button:hover,
+.button:hover,
+.actions button:hover {
+    background: #1d4ed8;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.45);
+    transform: translateY(-1px);
+}
+
+button.primary:hover,
+.actions .primary:hover {
+    background: linear-gradient(135deg, #1d4ed8, #0ea5e9);
+}
+
+button:disabled,
+.button:disabled {
+    opacity: 0.45;
+    cursor: default;
+    box-shadow: none;
+}
+
+.inline-form {
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+/* Upload box (templates etc.) */
+.upload-box {
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-strong);
+    background: var(--bg-card-soft);
+    padding: var(--gap-4);
+    text-align: center;
+    color: var(--text-soft);
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+}
+
+.upload-box.is-dragover {
+    border-style: solid;
+    border-color: var(--accent);
+    background: #0b1120;
+}
+
+.upload-box p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* ---------------------- Tables – global dark theme ---------------- */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: transparent !important;
+}
+
+th,
+td {
+    padding: 0.45rem 0.75rem;
+    border-bottom: 1px solid #020617;
+    font-size: 0.9rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Headers – kill all white bars */
+tr > th,
+thead,
+thead tr,
+thead th {
+    background-color: var(--bg-table-header) !important;
+    background: var(--bg-table-header) !important;
+    color: var(--text-soft) !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+/* Body rows – dark striping */
+tbody tr {
+    background-color: #020b1f !important;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #020817 !important;
+}
+
+/* Subtle hover highlight so tech can track the row */
+tbody tr:hover {
+    background-color: #071326 !important;
+}
+
+/* Dark “panel” tables for jobs / templates / parts */
+.jobs-table,
+.parts-table,
+.templates-table,
+.users-table {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+}
+
+/* Table inputs – dark pills */
+.strip-survey-table input,
+.strip-survey-table select,
+.parts-table input,
+.parts-table select,
+.jobs-table input,
+.jobs-table select,
+.users-table input,
+.users-table select {
+    background-color: #020617;
+    color: #f9fafb;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+}
+
+.strip-survey-table input:focus,
+.strip-survey-table select:focus,
+.parts-table input:focus,
+.parts-table select:focus,
+.jobs-table input:focus,
+.jobs-table select:focus,
+.users-table input:focus,
+.users-table select:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.4);
+}
+
+/* Jobs / parts specific row tweaks */
+.jobs-table tbody tr,
+.parts-table tbody tr {
+    background: #020817 !important;
+}
+
+.jobs-table tbody tr:nth-child(even),
+.parts-table tbody tr:nth-child(even) {
+    background: #020b1f !important;
+}
+
+.jobs-table tbody tr:hover,
+.parts-table tbody tr:hover {
+    background: #071326 !important;
+}
+
+/* ---------------------- Strip survey: shared ---------------------- */
+
+.survey-section {
+    margin-bottom: var(--gap-4);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-soft);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease,
+                transform 0.08s ease;
+}
+
+.survey-section[open] {
+    border-color: var(--accent-soft);
+    box-shadow: 0 22px 55px rgba(37, 99, 235, 0.35);
+    transform: translateY(-1px);
+}
+
+.section-summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 0.6rem 1.4rem;
+    background: #020617;
+    color: #e5e7eb;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    position: relative;
+}
+
+.section-summary::marker {
+    content: "";
+}
+
+.section-summary::after {
+    content: "▾";
+    position: absolute;
+    right: 1.4rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(-90deg);
+    transition: transform 0.14s ease;
+    color: #64748b;
+}
+
+.survey-section[open] .section-summary::after {
+    transform: translateY(-50%) rotate(0deg);
+}
+
+.section-body {
+    padding: var(--gap-3) var(--gap-3) var(--gap-4);
+    background: #02091c;
+}
+
+.section-diagram {
+    background: #020617;
+    color: var(--text-soft);
+    border-radius: var(--radius-md);
+    padding: 0.65rem 0.9rem;
+    margin-bottom: var(--gap-3);
+    border: 1px dashed var(--border-subtle);
+    font-size: 0.85rem;
+}
+
+/* Per-part row layout */
+.part-row td {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+}
+
+.lock-cell {
+    text-align: center;
+    width: 32px;
+}
+
+.lock-icon {
+    font-size: 0.9rem;
+}
+
+.pos-cell,
+.qty-cell {
+    width: 60px;
+    white-space: nowrap;
+}
+
+.partno-cell {
+    width: 120px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.name-cell {
+    min-width: 220px;
+}
+
+.status-cell {
+    white-space: nowrap;
+}
+
+.status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.status-cell select {
+    max-width: 130px;
+}
+
+.amount-cell input {
+    width: 80px;
+}
+
+.notes-photo-cell {
+    white-space: nowrap;
+}
+
+/* Icon buttons */
+.icon-button {
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.1rem 0.3rem;
+    color: #e5e7eb;
+}
+
+.icon-button:hover {
+    transform: translateY(-1px);
+}
+
+/* Decision pills – classic layout (full text) */
+.decision-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 80px;
+    height: 1.4rem;
+    padding: 0 0.4rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid transparent;
+    margin-left: 0.35rem;
+}
+
+.decision-none {
+    background: #020617;
+    border-color: #1f2937;
+    color: #6b7280;
+}
+
+.decision-good {
+    background: rgba(22, 163, 74, 0.18);
+    border-color: #22c55e;
+    color: #bbf7d0;
+}
+
+.decision-replace {
+    background: rgba(239, 68, 68, 0.18);
+    border-color: #ef4444;
+    color: #fecaca;
+}
+
+.decision-missing {
+    background: rgba(139, 92, 246, 0.18);
+    border-color: #8b5cf6;
+    color: #e9d5ff;
+}
+
+/* Locked rows */
+.locked-row {
+    background: #1f2937;
+}
+/* Highlight for test items (electric blue tint) */
+.row-test-item {
+    background-color: rgba(56, 189, 248, 0.12);
+}
+
+/* Highlight for menu / big-ticket items (purple tint) */
+.row-big-ticket {
+    background-color: rgba(147, 51, 234, 0.12);
+}
+/* Job meta + view toggle bar */
+.view-switch-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+}
+
+.view-switch-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.job-pill {
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.view-switch-right {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.view-pill {
+    border-radius: 999px;
+    padding: 0.25rem 0.9rem;
+    border: 1px solid rgba(148, 163, 184, 0.6);
+    background: rgba(15, 23, 42, 0.9);
+    font-size: 0.8rem;
+    text-decoration: none;
+}
+
+.view-pill.pill-active {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    border-color: transparent;
+}
+
+/* ---------------------- Split survey layout ----------------------- */
+/* (Diagram split view – layout="split")                              */
+
+.survey-layout-split .survey-split-root {
+    display: grid;
+    grid-template-columns: 1fr 1fr;  /* 50 / 50 split */
+    gap: 1.75rem;
+    align-items: flex-start;
+    margin: 0 -2.5rem;               /* push closer to page edges */
+}
+
+/* Left: diagram bubble fills column, stays centred & sticky */
+.survey-layout-split .split-diagram-column {
+    position: sticky;
+    top: 120px;
+    height: calc(100vh - 140px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.survey-layout-split .split-diagram-bubble {
+    width: 100%;
+    border-radius: 24px;
+    padding: 1rem;
+    background: radial-gradient(circle at top, rgba(255,255,255,0.06), rgba(0,0,0,0.75));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.7);
+    overflow: hidden;                 /* image zooms inside */
+}
+
+.survey-layout-split .split-diagram-img {
+    width: 100%;
+    display: block;
+    transform-origin: center center;
+    transition: transform 0.15s ease-out;
+}
+
+/* Hover zoom inside bubble */
+.survey-layout-split .split-diagram-bubble:hover .split-diagram-img {
+    transform: scale(1.25);
+}
+
+.survey-layout-split .split-diagram-caption {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+/* Right column */
+.survey-layout-split .split-survey-column {
+    min-width: 0;
+}
+
+/* Name pill: uniform width using “Fitting sleeve” as reference */
+.survey-layout-split .split-survey-table .name-cell {
+    width: 200px;
+    max-width: 200px;
+}
+
+.survey-layout-split .name-pill-scroll {
+    width: 200px;
+    max-width: 200px;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.name-pill-text {
+    display: inline-block;
+    padding: 0.25rem 0.9rem;
+}
+
+/* Small scroll bar inside name pill */
+.name-pill-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+.name-pill-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+.name-pill-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 999px;
+}
+
+/* Part number: no wrapping */
+.survey-layout-split .split-survey-table .partno-cell {
+    white-space: nowrap;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Status select clear & tidy */
+.survey-layout-split .split-survey-table .status-select {
+    min-width: 140px;
+}
+
+/* Lock cell tighter in split layout */
+.survey-layout-split .split-survey-table .lock-cell {
+    padding-left: 0.15rem;
+    padding-right: 0.15rem;
+}
+.survey-layout-split .split-survey-table .lock-icon {
+    font-size: 0.8rem;
+}
+
+/* Round G / R / M indicator in split layout */
+.survey-layout-split .status-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.survey-layout-split .decision-pill {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: rgba(0,0,0,0.65);
+}
+
+/* Colours for G / R / M */
+.survey-layout-split .decision-good {
+    background: radial-gradient(circle at top, #3dd68c, #0b3b26);
+}
+
+.survey-layout-split .decision-replace {
+    background: radial-gradient(circle at top, #ff6b81, #3b0b16);
+}
+
+.survey-layout-split .decision-missing {
+    background: radial-gradient(circle at top, #ffd166, #3b2a0b);
+}
+
+/* Hide Amt column in split if you’re using pure cycling pill */
+.survey-layout-split .split-survey-table .split-amt-header,
+.survey-layout-split .split-survey-table .amount-cell {
+    display: none;
+}
+
+/* Status button that cycles states, only showing pill */
+.survey-layout-split .status-cycle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+.survey-layout-split .status-cycle:focus {
+    outline: none;
+}
+.survey-layout-split .status-cycle:focus-visible .decision-pill {
+    box-shadow: 0 0 0 2px rgba(88,166,255,0.7);
+}
+
+/* Mobile – stack into one column */
+@media (max-width: 900px) {
+    .survey-layout-split .survey-split-root {
+        grid-template-columns: 1fr;
+        margin: 0;
+    }
+    .survey-layout-split .split-diagram-column {
+        position: static;
+        height: auto;
+        display: block;
+    }
+}
+
+/* ---------------------- Parts & stores ---------------------------- */
+
+.parts-table {
+    table-layout: fixed;
+}
+
+.parts-table .name-cell {
+    max-width: 240px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.parts-table .partno-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.parts-table .qty-cell {
+    width: 70px;
+    white-space: nowrap;
+}
+
+.parts-table .stock-cell {
+    width: 70px;
+    white-space: nowrap;
+}
+
+/* Stores flags – round indicators for 100% and KIT */
+.stores-flag-cell {
+    text-align: center;
+}
+
+.stores-dot {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: transparent;
+    opacity: 0.35;
+}
+
+.stores-dot-100 {
+    background: #a855f7;              /* purple */
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.8);
+    opacity: 1;
+}
+
+.stores-dot-kit {
+    background: #fb923c;              /* orange */
+    box-shadow: 0 0 8px rgba(251, 146, 60, 0.8);
+    opacity: 1;
+}
+
+.stores-dot-empty {
+    opacity: 0.2;
+}
+
+/* Parts page “stock / stores” chip */
+.parts-table .stores-cell {
+    font-size: 0.85rem;
+}
+
+.parts-table .stores-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(0, 0, 0, 0.15);
+}
+
+.parts-table .stores-chip.stores-ok {
+    opacity: 0.9;
+}
+
+.parts-table .stores-chip.stores-short {
+    border-color: #ff7b7b;
+}
+
+.parts-table .stores-shortfall {
+    font-weight: 600;
+}
+
+.text-muted {
+    opacity: 0.6;
+}
+
+/* ---------------------- Template editor --------------------------- */
+
+.template-editor {
+    max-width: 1200px;
+    margin: 0 auto var(--gap-5);
+}
+
+/* Header card above the lines table */
+.template-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--gap-3);
+    margin-bottom: var(--gap-3);
+}
+
+.template-editor-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.template-editor-meta span {
+    padding: 0.15rem 0.65rem;
+    border-radius: 999px;
+    background: rgba(15,23,42,0.9);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-soft);
+}
+
+/* Lines card / scroll area */
+.template-editor-lines-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-card);
+    box-shadow: var(--shadow-soft);
+    padding: 0;
+    overflow: hidden;
+}
+
+.template-editor-lines-inner {
+    max-height: 520px;            /* scroll if loads of rows */
+    overflow: auto;
+}
+
+/* Lines table itself */
+.template-lines-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;          /* stop columns jumping */
+    font-size: 0.85rem;
+}
+
+.template-lines-table th,
+.template-lines-table td {
+    padding: 0.3rem 0.4rem;
+    border-bottom: 1px solid #020617;
+    text-align: left;
+    vertical-align: middle;
+}
+
+/* Dark sticky header */
+.template-editor .template-lines-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-table-header);
+    color: var(--text-soft);
+    font-weight: 500;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+/* Column sizing --------------------------------------------------- */
+/* Pos */
+.template-lines-table th.pos-col,
+.template-lines-table td.pos-cell {
+    width: 50px;
+    max-width: 50px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* Part no */
+.template-lines-table th.partno-col,
+.template-lines-table td.partno-cell {
+    width: 150px;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Name – main text column */
+.template-lines-table th.name-col,
+.template-lines-table td.name-cell {
+    width: 260px;
+    max-width: 260px;
+}
+
+/* Qty */
+.template-lines-table th.qty-col,
+.template-lines-table td.qty-cell {
+    width: 60px;
+    max-width: 60px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Flag columns: 100%, KIT, Meas */
+.template-lines-table th.flag-col,
+.template-lines-table td.flag-cell {
+    width: 60px;
+    max-width: 60px;
+    text-align: center;
+}
+
+/* Optional “lock” / delete icon column */
+.template-lines-table th.action-col,
+.template-lines-table td.action-cell {
+    width: 48px;
+    max-width: 48px;
+    text-align: center;
+}
+
+/* Inputs inside lines table */
+.template-lines-table input[type="text"],
+.template-lines-table input[type="number"],
+.template-lines-table select {
+    width: 100%;
+    background: #020617;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8rem;
+}
+
+/* Tiny centre-aligned flag checkboxes */
+.template-lines-table .flag-inline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+}
+
+.template-lines-table .flag-inline input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+}
+
+/* Subtle row hover so you can track where you are */
+.template-editor .template-lines-table tbody tr {
+    background: #020b1f;
+}
+
+.template-editor .template-lines-table tbody tr:nth-child(even) {
+    background: #020817;
+}
+
+.template-editor .template-lines-table tbody tr:hover {
+    background: #071326;
+}
+
+/* ---------------- Template editor “bubble” like survey ------------ */
+
+.template-bubble {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 24px;
+    background: radial-gradient(circle at top left,
+        rgba(59, 130, 246, 0.22),
+        rgba(15, 23, 42, 1)
+    );
+    box-shadow:
+        0 0 0 1px rgba(148, 163, 184, 0.25),
+        0 0 28px rgba(37, 99, 235, 0.45);
+}
+
+/* keep the table breathing nicely inside the bubble */
+.template-bubble .strip-survey-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.template-bubble .strip-survey-table th,
+.template-bubble .strip-survey-table td {
+    background: transparent;        /* let the glow show through */
+}
+
+/* tweak section headers so they look like the strip survey group labels */
+.template-bubble tr.section-header td {
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    padding-top: 0.6rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+/* ---------------------- Auth pages -------------------------------- */
+
+.auth-wrapper {
+    min-height: calc(100vh - 80px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-card {
+    max-width: 380px;
+    width: 100%;
+    text-align: left;
+}
+
+.auth-card h1 {
+    margin-top: 0;
+    margin-bottom: 1.2rem;
+    font-size: 1.4rem;
+}
+
+/* Tighten column spacing on Parts list only */
+.parts-table th,
+.parts-table td {
+    padding-left: 0.25rem;   /* was ~0.75rem globally */
+    padding-right: 0.25rem;
+}
+
+/* Split survey – tighter column spacing + centred headers */
+.survey-layout-split .split-survey-table th {
+    text-align: center;
+}
+
+/* Slightly smaller base padding in split layout */
+.survey-layout-split .split-survey-table th,
+.survey-layout-split .split-survey-table td {
+    padding-left: 0.45rem;
+    padding-right: 0.45rem;
+}
+
+/* Pos ↔ Part no */
+.survey-layout-split .split-survey-table th:nth-child(2),
+.survey-layout-split .split-survey-table td:nth-child(2) { /* Pos */
+    padding-right: 0.25rem;
+}
+
+.survey-layout-split .split-survey-table th:nth-child(3),
+.survey-layout-split .split-survey-table td:nth-child(3) { /* Part no */
+    padding-left: 0.25rem;
+}
+
+/* Name ↔ Status */
+.survey-layout-split .split-survey-table th:nth-child(4),
+.survey-layout-split .split-survey-table td:nth-child(4) { /* Name */
+    padding-right: 0.30rem;
+}
+
+.survey-layout-split .split-survey-table th:nth-child(5),
+.survey-layout-split .split-survey-table td:nth-child(5) { /* Status */
+    padding-left: 0.30rem;
+    padding-right: 0.30rem;
+}
+
+/* Status ↔ Notes / Photos */
+.survey-layout-split .split-survey-table th:nth-child(6),
+.survey-layout-split .split-survey-table td:nth-child(6) { /* Notes / Photos */
+    padding-left: 0.30rem;
+}
+/* Test items – electric blue full-row tint */
+.row-test-item {
+    background-color: rgba(56, 189, 248, 0.12);  /* light blue wash */
+}
+
+/* Menu / big-ticket items – purple full-row tint */
+.row-big-ticket {
+    background-color: rgba(147, 51, 234, 0.12);  /* light purple wash */
+}
+/* ─────────────────────────────────────────────
+   Big-ticket / Test row highlighting
+   ───────────────────────────────────────────── */
+
+.strip-survey-table tr.row-test-item,
+.split-survey-table tr.row-test-item {
+    background-color: rgba(56, 189, 248, 0.16) !important;  /* electric blue wash */
+}
+
+.strip-survey-table tr.row-big-ticket,
+.split-survey-table tr.row-big-ticket {
+    background-color: rgba(147, 51, 234, 0.16) !important;  /* purple wash */
+}
+
+/* Inline tags next to the name cell */
+.tag-test-item,
+.tag-big-ticket {
+    display: inline-block;
+    padding: 0.1rem 0.35rem;
+    margin-left: 0.35rem;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    line-height: 1.2;
+    vertical-align: middle;
+}
+
+.tag-test-item {
+    background: rgba(56, 189, 248, 0.16);
+    border: 1px solid rgba(56, 189, 248, 0.7);
+}
+
+.tag-big-ticket {
+    background: rgba(147, 51, 234, 0.16);
+    border: 1px solid rgba(147, 51, 234, 0.7);
+}
+/* Name column – fixed grid, scroll text inside */
+.name-cell .name-pill-scroll {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+.name-pill-text {
+    display: inline-block;
+}
+
+/* (Optional) thin scrollbar so it looks neat */
+.name-pill-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+/* ===========================
+   STORES – ENGINE CARD VIEW
+   =========================== */
+
+.job-cards-column {
+    max-width: 960px;
+    margin-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Card container */
+.job-card {
+    position: relative;
+    padding: 1.1rem 1.4rem;
+    border-radius: 18px;
+    background: radial-gradient(circle at 0 0, #111827 0, #020617 55%, #020617 100%);
+    border: 1px solid #111827;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.25rem;
+}
+
+/* Left side: title + stats */
+.job-card-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.job-card-header h2 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* Stats grid */
+.job-card-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem 1.75rem;
+    font-size: 0.82rem;
+}
+
+.job-card-row {
+    display: flex;
+    justify-content: flex-start;
+    gap: 0.35rem;
+}
+
+.job-card-row .meta-label {
+    color: #9ca3af;
+    opacity: 0.9;
+    min-width: 9rem;
+}
+
+.job-card-row .meta-value {
+    color: #e5e7eb;
+    font-weight: 500;
+}
+
+/* Right side: buttons */
+.job-card-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.job-card-actions .button {
+    min-width: 170px;
+    justify-content: center;
+}
+
+/* Make engine dropdown & pills sit nicely */
+.view-switch-bar + .survey-filters {
+    margin-top: 0.25rem;
+}
+/* STORES template table – tighten name + make right side clearer */
+
+.stores-table .name-cell {
+    max-width: 260px;
+}
+
+.stores-table .name-cell .name-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Make the stock/min/bin/notes inputs fill their cells nicely */
+.stores-table td input.notes-input,
+.stores-table td input.qty-required {
+    width: 100%;
+}
+
+.stores-table td input.qty-required {
+    text-align: center;
+}
+
+/* 100% / KIT pills – small indicators instead of big bars */
+.stores-table .status-cell .decision-pill {
+    display: inline-block;
+    min-width: 14px;
+    height: 14px;
+    padding: 0;
+    border-radius: 999px;
+}
+/* ===================== Dashboard layout ===================== */
+
+.page-title {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-columns {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.dashboard-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-section-header h2 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+.dashboard-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.dashboard-job-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.dashboard-empty {
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+/* ===================== Dashboard job cards ===================== */
+
+.job-card {
+  border-radius: 24px;
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 1.25rem;
+  background: radial-gradient(circle at top left, #151b2c 0%, #070a12 70%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.job-card-inner {
+  display: flex;
+  align-items: stretch;
+  gap: 1.75rem;
+}
+
+.job-card-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.job-card-right {
+  flex: 0 0 190px;
+  display: flex;
+  align-items: stretch;
+}
+
+/* thumbnail – tall oblong, full card height */
+.job-thumb.job-thumb-tall {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2.3rem;
+  border-radius: 26px;
+  background: radial-gradient(circle at top, #3a4bff 0%, #111426 80%);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* status pills at very top */
+.job-status-pills {
+  margin-bottom: 0.15rem;
+}
+
+.job-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.job-progress-step {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.45;
+}
+
+.job-progress-step.is-current {
+  opacity: 1;
+  border-color: #4b7dff;
+  background: rgba(75, 125, 255, 0.14);
+}
+
+/* header + meta grid */
+
+.job-card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.job-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.job-title-link {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.job-stage-chip {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.job-meta-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1.6rem;
+  margin-top: 0.2rem;
+}
+
+.job-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.job-meta-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.job-meta-value {
+  font-size: 0.85rem;
+}
+
+.job-next-row {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.job-actions-row {
+  margin-top: 0.7rem;
+}
+
+.job-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* Text-style “buttons” used in the card footer */
+
+.btn-link-primary,
+.btn-link-secondary {
+  font-size: 0.85rem;
+  text-decoration: none;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+
+.btn-link-primary {
+  background: rgba(37, 99, 235, 0.2);
+  border-color: rgba(37, 99, 235, 0.7);
+}
+
+.btn-link-secondary {
+  background: transparent;
+  border-color: rgba(148, 163, 184, 0.6);
+  opacity: 0.9;
+}
+
+.btn-link-primary:hover {
+  background: rgba(37, 99, 235, 0.35);
+}
+
+.btn-link-secondary:hover {
+  background: rgba(15, 23, 42, 0.9);
+}
+/* ───────── Dashboard polish overrides ───────── */
+
+.job-status-pills {
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.job-progress {
+  justify-content: center;
+}
+
+.job-title-link {
+  font-size: 1.0rem;
+}
+
+.job-meta-line {
+  margin-top: 0.3rem;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.job-meta-line span {
+  white-space: nowrap;
+}
+
+.job-next-row {
+  margin-top: 0.5rem;
+}
+
+.job-actions-row {
+  margin-top: 0.7rem;
+}
+/* ───────── FINAL DASHBOARD CARD FIX ───────── */
+
+/* Card: keep nice gradient, but rely on inner flex for layout */
+.job-card {
+  border-radius: 24px;
+  padding: 1.3rem 1.9rem;
+  margin-bottom: 1.3rem;
+}
+
+/* Middle section: left info, right thumbnail */
+.job-card-inner {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1.6rem;
+}
+
+/* LEFT: all job info, hard-left aligned */
+.job-card-left {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.job-card-main {
+  width: 100%;
+  margin: 0;
+}
+
+/* RIGHT: fixed-width column for thumbnail */
+.job-card-right {
+  flex: 0 0 190px;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+/* Make the thumbnail a tall oblong that fills card height */
+.job-thumb {
+  height: 100% !important;        /* override old 80px height */
+}
+
+.job-thumb.job-thumb-tall {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0 2.3rem;
+  border-radius: 26px;             /* oblong with rounded corners */
+  background: radial-gradient(circle at top, #3a4bff 0%, #111426 80%);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: lowercase;
+}
+
+/* Status pills: top-middle strip */
+.job-status-pills {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.7rem;
+}
+
+.job-progress-step {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  opacity: 0.45;
+}
+
+.job-progress-step.is-current {
+  opacity: 1;
+  border-color: #4b7dff;
+  background: rgba(75, 125, 255, 0.18);
+}
+/* ───────── DASHBOARD CARDS – FINAL LAYOUT ───────── */
+
+.dashboard-job-list .job-card {
+  border-radius: 24px;
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 1.25rem;
+  background: radial-gradient(circle at top left, #151b2c 0%, #070a12 70%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dashboard-job-list .job-card-body {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 1.8rem;
+}
+
+.dashboard-job-list .job-card-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.dashboard-job-list .job-card-thumb {
+  flex: 0 0 190px;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+/* Thumbnail: full card height, oblong, right side */
+.dashboard-job-list .job-thumb {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2.1rem;
+  border-radius: 26px;
+  background: radial-gradient(circle at top, #3a4bff 0%, #111426 80%);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Status pills row at the very top, centred */
+.dashboard-job-list .job-status-pills {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.7rem;
+}
+
+/* Step pills */
+.dashboard-job-list .job-progress-step {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  opacity: 0.45;
+  font-size: 0.75rem;
+}
+.dashboard-job-list .job-progress-step.is-current {
+  opacity: 1;
+  border-color: #4b7dff;
+  background: rgba(75, 125, 255, 0.18);
+}
+
+/* Header row: job title + stage chip */
+.dashboard-job-list .job-card-title-row {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.dashboard-job-list .job-title-link {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dashboard-job-list .job-stage-chip {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+/* Meta info grid: customer, tech, engine, date */
+.dashboard-job-list .job-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.35rem 1.8rem;
+  margin-top: 0.25rem;
+}
+
+.dashboard-job-list .job-meta-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.6;
+}
+
+.dashboard-job-list .job-meta-value {
+  font-size: 0.85rem;
+}
+
+/* Next action + buttons */
+.dashboard-job-list .job-next-row {
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.dashboard-job-list .job-actions {
+  margin-top: 0.6rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+/* Hard-align job info to the left edge inside the card */
+.dashboard-job-list .job-card-main {
+  align-items: flex-start;
+  margin-left: 0;           /* kill any inherited horizontal centring */
+  padding-left: 0;          /* if older rules added padding */
+}
+/* ─────────────────────────────────────────────
+   DASHBOARD – CLEAN JOB CARD LAYOUT
+   (overrides earlier job-card styles)
+   ───────────────────────────────────────────── */
+
+.job-card {
+  border-radius: 24px;
+  padding: 1.25rem 1.75rem 1.4rem;
+  margin-bottom: 1.25rem;
+  background: radial-gradient(circle at top left, #151b2c 0%, #070a12 70%);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow: var(--shadow-soft);
+}
+
+/* status pills at very top, centred */
+.job-progress-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.6rem;
+}
+
+.job-progress {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+}
+
+.job-progress-step {
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0.45;
+}
+
+.job-progress-step.is-current {
+  opacity: 1;
+  border-color: #4b7dff;
+  background: rgba(75, 125, 255, 0.14);
+}
+
+/* body: info left, thumbnail right */
+.job-card-body {
+  display: flex;
+  align-items: stretch;
+  gap: 1.75rem;
+}
+
+.job-card-main {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.job-card-thumb-wrap {
+  flex: 0 0 190px;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+/* tall oblong thumbnail fills card height */
+.job-thumb.job-thumb-tall {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2.2rem;
+  border-radius: 26px;
+  background: radial-gradient(circle at top, #3a4bff 0%, #111426 80%);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* header / meta / next / actions – left aligned, tidy */
+
+.job-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.job-title-link {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.job-stage-chip {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.75;
+}
+
+.job-meta-grid-compact {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem 1.6rem;
+  margin-top: 0.15rem;
+}
+
+.job-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.job-meta-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.job-meta-value {
+  font-size: 0.85rem;
+}
+
+.job-next-row {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.job-actions-row {
+  margin-top: 0.7rem;
+}
+
+.job-actions-row .button {
+  margin-right: 0.5rem;
+}
+/* ==== FINAL DASHBOARD CARD ALIGNMENT FIX ==== */
+
+/* Let the card be a simple vertical stack: 
+   status row on top, body underneath */
+.job-card {
+  display: block;
+  text-align: left;
+}
+
+/* Body = info on the left, thumbnail on the right */
+.job-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: stretch;
+  margin-top: 0.75rem;
+}
+
+/* Text block stays pinned to the left */
+.job-card-main {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+/* Thumbnail pinned to the right, full card height */
+.job-card-thumb-wrap {
+  flex: 0 0 190px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: stretch;
+}
+
+.job-thumb.job-thumb-tall {
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+}
+
+/* Status pills centred along the top of the card */
+.job-progress-row {
+  display: flex;
+  justify-content: center;
+}
+/* --- Dashboard: job title pill --- */
+
+.job-title-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(129, 140, 248, 0.7);   /* soft indigo edge */
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #c4b5fd;                                /* lavender text */
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.job-title-link:hover {
+  background: linear-gradient(135deg, #4f46e5, #2563eb);
+  border-color: transparent;
+  color: #f9fafb;
+  box-shadow:
+    0 0 0 1px rgba(129, 140, 248, 0.7),
+    0 10px 25px rgba(37, 99, 235, 0.45);
+}
+/* --- Dashboard: card blue glow to match strip survey --- */
+
+.job-card {
+  background: radial-gradient(
+      circle at top left,
+      rgba(37, 99, 235, 0.22),
+      #050814 60%
+  );
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.8),
+    0 20px 50px rgba(15, 23, 42, 0.9),
+    0 0 38px rgba(37, 99, 235, 0.35);  /* subtle blue halo */
+}

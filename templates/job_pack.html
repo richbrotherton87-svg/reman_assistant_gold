@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Job pack – Job {{ job.job_number }}</h1>
+
+{# ───────── Top metadata card ───────── #}
+<div class="card">
+    <p><strong>Customer:</strong> {{ job.customer_name or "—" }}</p>
+    <p><strong>Engine:</strong> {{ job.engine_type or "—" }}</p>
+    <p><strong>Serial no:</strong> {{ job.serial_number or "—" }}</p>
+    {% if job.template %}
+        <p><strong>Template:</strong> {{ job.template.name }}</p>
+    {% endif %}
+    {% if job.assigned_to %}
+        <p><strong>Assigned to:</strong> {{ job.assigned_to.username }} ({{ job.assigned_to.role.value }})</p>
+    {% else %}
+        <p><strong>Assigned to:</strong> Unassigned</p>
+    {% endif %}
+    <p>
+        <strong>Status:</strong>
+        <span class="status-pill status-{{ job.status.value }}">
+            {{ job.status.value | replace('_', ' ') | title }}
+        </span>
+    </p>
+    <p><strong>Created:</strong> {{ job.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+    <p><strong>Updated:</strong> {{ job.updated_at.strftime('%Y-%m-%d %H:%M') if job.updated_at else "—" }}</p>
+</div>
+
+{# ───────── Summary tiles (Survey / Parts / Attachments) ───────── #}
+<div class="grid-3">
+    <div class="card">
+        <h2>Strip survey</h2>
+        {% set sc = survey_counts %}
+        <p>Total lines: <strong>{{ sc.total }}</strong></p>
+        <p>
+            Good: <strong>{{ sc.good }}</strong> ·
+            Replace: <strong>{{ sc.replace }}</strong> ·
+            Missing: <strong>{{ sc.scrap }}</strong> ·
+            Undecided: <strong>{{ sc.undecided }}</strong>
+        </p>
+        <p>
+            100% items: <strong>{{ sc.always }}</strong> ·
+            Big ticket: <strong>{{ sc.big_ticket }}</strong> ·
+            Test items: <strong>{{ sc.test }}</strong>
+        </p>
+        <a class="button" href="{{ url_for('job_survey', job_id=job.id) }}">
+            Open survey
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Parts / BOM</h2>
+        <p>Total parts: <strong>{{ parts|length }}</strong></p>
+        <p>
+            To order:
+            <strong>
+                {{
+                    parts
+                    |selectattr('stock_status', 'equalto', StockStatusEnum.TO_ORDER)
+                    |list
+                    |length
+                }}
+            </strong>
+            · In stock:
+            <strong>
+                {{
+                    parts
+                    |selectattr('stock_status', 'equalto', StockStatusEnum.IN_STOCK)
+                    |list
+                    |length
+                }}
+            </strong>
+            · On order:
+            <strong>
+                {{
+                    parts
+                    |selectattr('stock_status', 'equalto', StockStatusEnum.ON_ORDER)
+                    |list
+                    |length
+                }}
+            </strong>
+        </p>
+        <a class="button" href="{{ url_for('job_parts', job_id=job.id) }}">
+            Open parts list
+        </a>
+    </div>
+
+    <div class="card">
+        <h2>Attachments</h2>
+        <p>Total files: <strong>{{ attachments|length }}</strong></p>
+        {% if attachments %}
+            <ul class="compact-list">
+                {% for att in attachments[:5] %}
+                    <li>{{ att.filename }}</li>
+                {% endfor %}
+                {% if attachments|length > 5 %}
+                    <li>… +{{ attachments|length - 5 }} more</li>
+                {% endif %}
+            </ul>
+        {% else %}
+            <p class="text-muted">No files attached yet.</p>
+        {% endif %}
+        <a class="button" href="{{ url_for('job_attachments', job_id=job.id) }}">
+            View / upload files
+        </a>
+    </div>
+</div>
+
+{# ───────── Survey snapshot ───────── #}
+<div class="card">
+    <h2>Survey snapshot</h2>
+    {% if not survey_items %}
+        <p class="text-muted">No survey lines yet.</p>
+    {% else %}
+        <table class="strip-survey-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Pos</th>
+                    <th>Part no</th>
+                    <th>Name</th>
+                    <th>Qty</th>
+                    <th>Decision</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in survey_items[:15] %}
+                    <tr>
+                        <td>{{ item.section or "—" }}</td>
+                        <td>{{ item.pos or "—" }}</td>
+                        <td>{{ item.part_no or "—" }}</td>
+                        <td>{{ item.name or "—" }}</td>
+                        <td>{{ item.qty or 0 }}</td>
+                        <td>
+                            {% if item.decision %}
+                                {{ item.decision.value }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if survey_items|length > 15 %}
+            <p class="text-muted">Showing first 15 lines. Open the survey for full details.</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ───────── Parts snapshot ───────── #}
+<div class="card">
+    <h2>Parts list snapshot</h2>
+    {% if not parts %}
+        <p class="text-muted">No parts have been generated for this job yet.</p>
+    {% else %}
+        <table class="strip-survey-table parts-table">
+            <thead>
+                <tr>
+                    <th>Section</th>
+                    <th>Part no</th>
+                    <th>Name</th>
+                    <th>Qty req</th>
+                    <th>Stock status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for part in parts[:15] %}
+                    <tr>
+                        <td>{{ part.section or "—" }}</td>
+                        <td>{{ part.part_no or "—" }}</td>
+                        <td>{{ part.name or "—" }}</td>
+                        <td>{{ part.qty_required or 0 }}</td>
+                        <td>{{ part.stock_status.value if part.stock_status else "—" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if parts|length > 15 %}
+            <p class="text-muted">Showing first 15 parts. Open the parts list for full details.</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+{# ───────── Admin test helpers (same idea as before) ───────── #}
+{% if current_user.role.value == 'Admin' %}
+<div class="card">
+    <h2>Admin test actions</h2>
+    <p class="text-muted">
+        Helpers for demos and testing. These only affect this job.
+    </p>
+    <div class="actions">
+        <form
+            method="post"
+            action="{{ url_for('admin_autofill_survey', job_id=job.id) }}"
+            class="inline-form"
+            onsubmit="return confirm('Auto-fill this survey for testing?');"
+        >
+            <button type="submit" class="button">
+                Auto-fill survey for testing
+            </button>
+        </form>
+
+        <form
+            method="post"
+            action="{{ url_for('admin_mark_all_good', job_id=job.id) }}"
+            class="inline-form"
+            onsubmit="return confirm('Mark ALL survey lines as Good for this job?');"
+        >
+            <button type="submit" class="button">
+                Mark all survey lines Good
+            </button>
+        </form>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

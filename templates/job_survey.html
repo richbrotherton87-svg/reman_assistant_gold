@@ -1,0 +1,888 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Strip survey – Job {{ job.job_number }}</h1>
+
+{# View switch pill bar (always visible) #}
+<div class="view-switch-bar">
+    <div class="view-switch-left">
+        <span class="job-pill">Job {{ job.job_number }}</span>
+        {% if job.engine_type %}
+            <span class="job-pill">Engine: {{ job.engine_type }}</span>
+        {% endif %}
+        {% if job.customer_name %}
+            <span class="job-pill">Customer: {{ job.customer_name }}</span>
+        {% endif %}
+        <span class="job-pill">Status: {{ job.status.value }}</span>
+    </div>
+    <div class="view-switch-right">
+        <a
+            href="{{ url_for('job_survey', job_id=job.id, layout='classic') }}"
+            class="view-pill {% if layout != 'split' %}pill-active{% endif %}"
+        >
+            Standard
+        </a>
+        <a
+            href="{{ url_for('job_survey', job_id=job.id, layout='split') }}"
+            class="view-pill {% if layout == 'split' %}pill-active{% endif %}"
+        >
+            Diagram split
+        </a>
+    </div>
+</div>
+
+{# Let JS know which layout we’re in (initial flag) #}
+<script>
+    window.SURVEY_LAYOUT = "{{ layout or 'classic' }}";
+</script>
+
+{% if layout == 'split' %}
+{# ================================================================== #}
+{#                    SPLIT / DIAGRAM LAYOUT                          #}
+{# ================================================================== #}
+
+<form method="post"
+      enctype="multipart/form-data"
+      class="survey-form survey-layout-{{ layout|default('classic') }}">
+
+    {% set ns = namespace(current_group=None) %}
+
+    <div class="survey-split-root">
+        {# Left: floating diagram bubble #}
+        <div class="split-diagram-column">
+            <div class="split-diagram-bubble">
+                {# Start blank – JS fills this in when a section opens #}
+                <img
+                    id="split-diagram-img"
+                    src=""
+                    alt="Section diagram"
+                    class="split-diagram-img"
+                >
+                <div class="split-diagram-caption">
+                    <span id="split-diagram-caption-text">
+                        No section open – stock image / placeholder
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {# Right: collapsible sections / table #}
+        <div class="split-survey-column">
+
+            {% for item in survey_items %}
+                {# Group key: e.g. "TA 0100" #}
+                {% set parts = (item.section or "").split(" ") %}
+                {% set group_key = (parts[0] ~ " " ~ parts[1]) if parts|length >= 2 else (item.section or "General") %}
+
+                {# Map internal decision enum to UI status name #}
+                {% if item.decision == DecisionEnum.REUSE %}
+                    {% set ui_status = "good" %}
+                {% elif item.decision == DecisionEnum.REPLACE %}
+                    {% set ui_status = "replace" %}
+                {% elif item.decision == DecisionEnum.SCRAP %}
+                    {% set ui_status = "missing" %}
+                {% else %}
+                    {% set ui_status = "none" %}
+                {% endif %}
+
+                {# Decorate row (menu / test) even if attrs missing) #}
+                {% set is_big_ticket = item.big_ticket|default(false) %}
+                {% set is_test_item = item.requires_test|default(false) %}
+
+                {# When the group changes, close previous table (except first) #}
+                {% if group_key != ns.current_group %}
+                    {% if not loop.first %}
+                                    </tbody>
+                                </table>
+                            </div> {# split-section-table-wrapper #}
+                        </details>
+                    {% endif %}
+
+                    {% set ns.current_group = group_key %}
+
+                    {# 🔑 Try multiple keys so we match how section_images was built #}
+                    {% set raw_section = item.section or group_key %}
+                    {% set section_name = raw_section %}
+                    {% set section_code = group_key|replace(' ', '')|replace('-', '')|replace('/', '')|upper %}
+                    {% set img_url = section_images.get(raw_section)
+                                     or section_images.get(group_key)
+                                     or section_images.get(section_code) %}
+
+                    <details class="survey-section split-section"
+                             data-section-name="{{ section_name }}"
+                             data-section-img="{{ img_url or '' }}">
+                        <summary class="section-summary">
+                            {{ item.section or group_key }}
+                        </summary>
+
+                        <div class="split-section-table-wrapper">
+                            <table class="strip-survey-table split-survey-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 32px;"></th>
+                                        <th>Pos</th>
+                                        <th>Part no</th>
+                                        <th>Name</th>
+                                        {# Amt column kept for layout but hidden via CSS #}
+                                        <th class="split-amt-header" style="display:none;">Amt</th>
+                                        <th>Status</th>
+                                        <th>Notes / Photos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                {% endif %}
+
+                <tr
+                    class="part-row
+                           {% if item.always_replace %} locked-row{% endif %}
+                           {% if is_big_ticket %} row-big-ticket{% endif %}
+                           {% if is_test_item %} row-test-item{% endif %}"
+                    data-big-ticket="{{ 1 if is_big_ticket else 0 }}"
+                    data-test-item="{{ 1 if is_test_item else 0 }}"
+                >
+                    <td class="lock-cell">
+                        {% if item.always_replace %}
+                            <span class="lock-icon" title="Always replace">🔒</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="pos-cell">{{ item.pos }}</td>
+
+                    <td class="partno-cell">
+                        {{ item.part_no }}
+                    </td>
+
+                    <td class="name-cell">
+                        <div class="name-pill-scroll">
+                            <span class="name-pill-text">
+                                {{ item.name }}
+                            </span>
+
+                            {% if item.in_kit %}
+                                <span class="kit-dot" title="KIT"></span>
+                            {% endif %}
+
+                            {% if is_big_ticket %}
+                                <span class="tag-big-ticket" title="Menu / upsell item">
+                                    MENU
+                                </span>
+                            {% endif %}
+
+                            {% if is_test_item %}
+                                <span class="tag-test-item" title="Requires test">
+                                    TEST
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    {# Hidden amount cell – not shown in split view, but still posts value #}
+                    <td class="amount-cell" style="display:none;">
+                        <span class="qty-value"
+                              data-item-id="{{ item.id }}">
+                            {{ item.qty }}
+                        </span>
+
+                        <input
+                            type="hidden"
+                            name="amount_required_{{ item.id }}"
+                            id="qty_required_{{ item.id }}"
+                            class="qty-required"
+                            min="0"
+                            max="{{ item.qty or 0 }}"
+                            data-max-qty="{{ item.qty or 0 }}"
+                            value="{% if item.qty_required %}{{ item.qty_required }}{% elif item.always_replace %}{{ item.qty }}{% else %}{% endif %}"
+                        >
+                    </td>
+
+                    <td class="status-cell">
+                        <div class="status-wrapper">
+                            {# Hidden select – driven by clickable pill #}
+                            <select
+                                id="decision_{{ item.id }}"
+                                name="decision_{{ item.id }}"
+                                class="status-select"
+                                data-item-id="{{ item.id }}"
+                                data-locked="{{ 1 if item.always_replace else 0 }}"
+                                {% if item.always_replace %}disabled{% endif %}
+                                style="display:none;"
+                            >
+                                <option value="" {% if ui_status == "none" %}selected{% endif %}>—</option>
+                                <option value="reuse" {% if item.decision == DecisionEnum.REUSE %}selected{% endif %}>
+                                    Good
+                                </option>
+                                <option value="replace" {% if item.decision == DecisionEnum.REPLACE %}selected{% endif %}>
+                                    Replace
+                                </option>
+                                <option value="scrap" {% if item.decision == DecisionEnum.SCRAP %}selected{% endif %}>
+                                    Missing
+                                </option>
+                            </select>
+
+                            {# Round G/R/M dot – click to cycle status #}
+                            <button
+                                type="button"
+                                class="status-cycle"
+                                data-select-id="decision_{{ item.id }}"
+                                {% if item.always_replace %}disabled{% endif %}
+                            >
+                                <span class="decision-pill decision-{{ ui_status }}">
+                                    {% if ui_status == "good" %}
+                                        G
+                                    {% elif ui_status == "replace" %}
+                                        R
+                                    {% elif ui_status == "missing" %}
+                                        M
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </span>
+                            </button>
+                        </div>
+                    </td>
+
+                    <td class="notes-photo-cell">
+                        <button
+                            type="button"
+                            class="icon-button notes-btn"
+                            data-target="notes_input_{{ item.id }}"
+                            title="Add notes"
+                        >
+                            📝
+                        </button>
+
+                        <button
+                            type="button"
+                            class="icon-button photo-btn"
+                            title="Add photo"
+                            onclick="document.getElementById('photo_input_{{ item.id }}').click();"
+                        >
+                            📷
+                        </button>
+
+                        <input
+                            type="file"
+                            id="photo_input_{{ item.id }}"
+                            name="photo_{{ item.id }}"
+                            accept="image/*"
+                            capture="environment"
+                            style="display:none;"
+                        >
+
+                        <input
+                            type="hidden"
+                            name="notes_{{ item.id }}"
+                            id="notes_input_{{ item.id }}"
+                            value="{{ item.notes or '' }}"
+                        >
+                    </td>
+                </tr>
+
+                {% if loop.last %}
+                                    </tbody>
+                                </table>
+                            </div> {# split-section-table-wrapper #}
+                        </details>
+                {% endif %}
+            {% endfor %}
+        </div> {# .split-survey-column #}
+    </div> {# .survey-split-root #}
+
+    <h2>Add survey line</h2>
+    <div class="add-row-panel">
+        <label>Section
+            <input type="text" name="new_section">
+        </label>
+        <label>Pos
+            <input type="number" name="new_pos" min="0">
+        </label>
+        <label>Part no
+            <input type="text" name="new_part_no">
+        </label>
+        <label>Name
+            <input type="text" name="new_name">
+        </label>
+        <label>Qty
+            <input type="number" name="new_qty" value="1" min="1">
+        </label>
+    </div>
+
+    {# ─────────────────────────────
+       Measurements panel (bottom)
+       ───────────────────────────── #}
+    {% set measured_items = survey_items | selectattr('requires_measurement') | list %}
+    {% if measured_items %}
+        <section class="measurements-panel">
+            <h2>Measurements</h2>
+            <table class="strip-survey-table measurements-table">
+                <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th>Pos</th>
+                        <th>Part no</th>
+                        <th>Name</th>
+                        <th>Spec min</th>
+                        <th>Spec max</th>
+                        <th>Unit</th>
+                        <th>Measured</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in measured_items %}
+                        <tr>
+                            <td>{{ item.section }}</td>
+                            <td>{{ item.pos }}</td>
+                            <td>{{ item.part_no }}</td>
+                            <td>{{ item.name }}</td>
+
+                            <td>
+                                <input
+                                    type="text"
+                                    name="spec_min_{{ item.id }}"
+                                    value="{{ item.spec_min or '' }}"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="spec_max_{{ item.id }}"
+                                    value="{{ item.spec_max or '' }}"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="measurement_unit_{{ item.id }}"
+                                    value="{{ item.measurement_unit or '' }}"
+                                    style="width:60px;"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="measurement_value_{{ item.id }}"
+                                    value="{{ item.measurement_value or '' }}"
+                                    style="width:80px;"
+                                >
+                            </td>
+                            <td>
+                                {% if item.measurement_result %}
+                                    {{ item.measurement_result.value.replace('_', ' ') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+
+    <div class="actions">
+        <button type="submit" name="action" value="save">Save progress</button>
+        <button type="submit" name="action" value="add_row">Add row</button>
+        <button type="submit" name="action" value="complete" class="primary">
+            Complete survey &amp; send to office
+        </button>
+    </div>
+</form>
+
+{% else %}
+{# ================================================================== #}
+{#                    CLASSIC / ORIGINAL LAYOUT                       #}
+{# ================================================================== #}
+
+<form method="post"
+      enctype="multipart/form-data"
+      class="survey-form survey-layout-{{ layout|default('classic') }}">
+
+    {% set ns = namespace(current_group=None) %}
+
+    {% for item in survey_items %}
+        {# Group key: e.g. "TA 0100" #}
+        {% set parts = (item.section or "").split(" ") %}
+        {% set group_key = (parts[0] ~ " " ~ parts[1]) if parts|length >= 2 else (item.section or "General") %}
+
+        {# Map internal decision enum to UI status name #}
+        {% if item.decision == DecisionEnum.REUSE %}
+            {% set ui_status = "good" %}
+        {% elif item.decision == DecisionEnum.REPLACE %}
+            {% set ui_status = "replace" %}
+        {% elif item.decision == DecisionEnum.SCRAP %}
+            {% set ui_status = "missing" %}
+        {% else %}
+            {% set ui_status = "none" %}
+        {% endif %}
+
+        {# Menu / test flags (using new requires_test) #}
+        {% set is_big_ticket = item.big_ticket|default(false) %}
+        {% set is_test_item = item.requires_test|default(false) %}
+
+        {# When the group changes, close previous table (except first) #}
+        {% if group_key != ns.current_group %}
+            {% if not loop.first %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+            {% endif %}
+
+            {% set ns.current_group = group_key %}
+
+            <details class="survey-section" {% if loop.first %}open{% endif %}>
+                <summary class="section-summary">
+                    {{ item.section or group_key }}
+                </summary>
+                <div class="section-diagram">
+                    {# 🔑 Try full label, group key, then compact code (TA0100) #}
+                    {% set raw_section = item.section or group_key %}
+                    {% set section_name = raw_section %}
+                    {% set section_code = group_key|replace(' ', '')|replace('-', '')|replace('/', '')|upper %}
+                    {% set img_url = section_images.get(raw_section)
+                                     or section_images.get(group_key)
+                                     or section_images.get(section_code) %}
+                    {% if img_url %}
+                        <img src="{{ img_url }}" alt="{{ section_name }} diagram"
+                             style="max-width: 100%; border-radius: 12px;">
+                    {% else %}
+                        Image missing
+                    {% endif %}
+                </div>
+
+                <table class="strip-survey-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 32px;"></th>
+                            <th>Pos</th>
+                            <th>Part no</th>
+                            <th>Qty</th>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Amt</th>
+                            <th>Notes / Photos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        {% endif %}
+
+        <tr
+            class="part-row
+                   {% if item.always_replace %} locked-row{% endif %}
+                   {% if is_big_ticket %} row-big-ticket{% endif %}
+                   {% if is_test_item %} row-test-item{% endif %}"
+            data-big-ticket="{{ 1 if is_big_ticket else 0 }}"
+            data-test-item="{{ 1 if is_test_item else 0 }}"
+        >
+            <td class="lock-cell">
+                {% if item.always_replace %}
+                    <span class="lock-icon" title="Always replace">🔒</span>
+                {% endif %}
+            </td>
+
+            <td class="pos-cell">{{ item.pos }}</td>
+            <td class="partno-cell">{{ item.part_no }}</td>
+            <td class="qty-cell">
+                <span class="qty-value" data-item-id="{{ item.id }}">{{ item.qty }}</span>
+            </td>
+
+            {# PATCHED: classic view name column now a fixed-width scrollable pill #}
+            <td class="name-cell">
+                <div class="name-pill-scroll"
+                     style="display:inline-block; max-width:210px; overflow-x:auto; white-space:nowrap;">
+                    <span class="name-pill-text">
+                        {{ item.name }}
+                    </span>
+
+                    {% if item.in_kit %}
+                        <span class="decision-pill decision-none"
+                              style="margin-left: 0.5rem; font-size: 0.65rem;">
+                            KIT
+                        </span>
+                    {% endif %}
+
+                    {% if is_big_ticket %}
+                        <span class="tag-big-ticket" title="Menu / upsell item">
+                            MENU
+                        </span>
+                    {% endif %}
+
+                    {% if is_test_item %}
+                        <span class="tag-test-item" title="Requires test">
+                            TEST
+                        </span>
+                    {% endif %}
+                </div>
+            </td>
+
+            <td class="status-cell">
+                <div class="status-wrapper">
+                    <select
+                        id="decision_{{ item.id }}"
+                        name="decision_{{ item.id }}"
+                        class="status-select"
+                        data-item-id="{{ item.id }}"
+                        data-locked="{{ 1 if item.always_replace else 0 }}"
+                        {% if item.always_replace %}disabled{% endif %}
+                    >
+                        <option value="" {% if ui_status == "none" %}selected{% endif %}>—</option>
+                        <option value="reuse" {% if item.decision == DecisionEnum.REUSE %}selected{% endif %}>
+                            Good
+                        </option>
+                        <option value="replace" {% if item.decision == DecisionEnum.REPLACE %}selected{% endif %}>
+                            Replace
+                        </option>
+                        <option value="scrap" {% if item.decision == DecisionEnum.SCRAP %}selected{% endif %}>
+                            Missing
+                        </option>
+                    </select>
+
+                    <span class="decision-pill decision-{{ ui_status }}">
+                        {% if ui_status == "none" %}
+                            —
+                        {% elif ui_status == "good" %}
+                            Good
+                        {% elif ui_status == "replace" %}
+                            Replace
+                        {% elif ui_status == "missing" %}
+                            Missing
+                        {% endif %}
+                    </span>
+                </div>
+            </td>
+
+            <td class="amount-cell">
+                <input
+                    type="number"
+                    name="amount_required_{{ item.id }}"
+                    id="qty_required_{{ item.id }}"
+                    class="qty-required"
+                    min="0"
+                    max="{{ item.qty or 0 }}"
+                    data-max-qty="{{ item.qty or 0 }}"
+                    value="{% if item.qty_required %}{{ item.qty_required }}{% elif item.always_replace %}{{ item.qty }}{% else %}{% endif %}"
+                >
+            </td>
+
+            <td class="notes-photo-cell">
+                <button
+                    type="button"
+                    class="icon-button notes-btn"
+                    data-target="notes_input_{{ item.id }}"
+                    title="Add notes"
+                >
+                    📝
+                </button>
+
+                <button
+                    type="button"
+                    class="icon-button photo-btn"
+                    onclick="document.getElementById('photo_input_{{ item.id }}').click();"
+                    title="Add photo"
+                >
+                    📷
+                </button>
+
+                <input
+                    type="file"
+                    id="photo_input_{{ item.id }}"
+                    name="photo_{{ item.id }}"
+                    accept="image/*"
+                    capture="environment"
+                    style="display:none;"
+                >
+
+                <input
+                    type="hidden"
+                    name="notes_{{ item.id }}"
+                    id="notes_input_{{ item.id }}"
+                    value="{{ item.notes or '' }}"
+                >
+            </td>
+        </tr>
+
+        {% if loop.last %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+        {% endif %}
+    {% endfor %}
+
+    <h2>Add survey line</h2>
+    <div class="add-row-panel">
+        <label>Section
+            <input type="text" name="new_section">
+        </label>
+        <label>Pos
+            <input type="number" name="new_pos" min="0">
+        </label>
+        <label>Part no
+            <input type="text" name="new_part_no">
+        </label>
+        <label>Name
+            <input type="text" name="new_name">
+        </label>
+        <label>Qty
+            <input type="number" name="new_qty" value="1" min="1">
+        </label>
+    </div>
+
+    {# ─────────────────────────────
+       Measurements panel (bottom)
+       ───────────────────────────── #}
+    {% set measured_items = survey_items | selectattr('requires_measurement') | list %}
+    {% if measured_items %}
+        <section class="measurements-panel">
+            <h2>Measurements</h2>
+            <table class="strip-survey-table measurements-table">
+                <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th>Pos</th>
+                        <th>Part no</th>
+                        <th>Name</th>
+                        <th>Spec min</th>
+                        <th>Spec max</th>
+                        <th>Unit</th>
+                        <th>Measured</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in measured_items %}
+                        <tr>
+                            <td>{{ item.section }}</td>
+                            <td>{{ item.pos }}</td>
+                            <td>{{ item.part_no }}</td>
+                            <td>{{ item.name }}</td>
+
+                            <td>
+                                <input
+                                    type="text"
+                                    name="spec_min_{{ item.id }}"
+                                    value="{{ item.spec_min or '' }}"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="spec_max_{{ item.id }}"
+                                    value="{{ item.spec_max or '' }}"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="measurement_unit_{{ item.id }}"
+                                    value="{{ item.measurement_unit or '' }}"
+                                    style="width:60px;"
+                                >
+                            </td>
+                            <td>
+                                <input
+                                    type="text"
+                                    name="measurement_value_{{ item.id }}"
+                                    value="{{ item.measurement_value or '' }}"
+                                    style="width:80px;"
+                                >
+                            </td>
+                            <td>
+                                {% if item.measurement_result %}
+                                    {{ item.measurement_result.value.replace('_', ' ') }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+
+    <div class="actions">
+        <button type="submit" name="action" value="save">Save progress</button>
+        <button type="submit" name="action" value="add_row">Add row</button>
+        <button type="submit" name="action" value="complete" class="primary">
+            Complete survey &amp; send to office
+        </button>
+    </div>
+</form>
+
+{% endif %}
+
+{# ------------------- Shared JS (both layouts) ------------------- #}
+<script>
+  // Final layout flag for JS
+  window.SURVEY_LAYOUT = "{{ layout or 'classic' }}";
+
+  // Shared map for both layouts
+  const statusMap = {
+    "":        { suffix: "none",    label: "—"       },
+    "reuse":   { suffix: "good",    label: "Good"    },
+    "replace": { suffix: "replace", label: "Replace" },
+    "scrap":   { suffix: "missing", label: "Missing" },
+  };
+
+  function updateDecisionRow(sel) {
+    if (!sel) return;
+
+    const itemId = sel.getAttribute("data-item-id");
+    const locked = sel.getAttribute("data-locked") === "1";
+    const wrapper = sel.parentElement;
+    const pill = wrapper ? wrapper.querySelector(".decision-pill") : null;
+    const qtySpan = document.querySelector(
+      '.qty-value[data-item-id="' + itemId + '"]'
+    );
+    const qtyInput = document.getElementById("qty_required_" + itemId);
+
+    const key = sel.value || "";
+    const info = statusMap[key] || statusMap[""];
+
+    if (pill) {
+      pill.className = "decision-pill decision-" + info.suffix;
+
+      const layout = window.SURVEY_LAYOUT || "classic";
+      if (layout === "split") {
+        // Round G / R / M dot in split layout
+        if (info.suffix === "good") {
+          pill.textContent = "G";
+        } else if (info.suffix === "replace") {
+          pill.textContent = "R";
+        } else if (info.suffix === "missing") {
+          pill.textContent = "M";
+        } else {
+          pill.textContent = "—";
+        }
+      } else {
+        // Classic layout – full labels
+        pill.textContent = info.label;
+      }
+    }
+
+    // Qty logic (still runs even if the input is hidden in split layout)
+    if (qtySpan && qtyInput) {
+      const current = (qtyInput.value || "").trim();
+      const baseQty = (qtySpan.textContent || "").trim();
+      const needsQty = key === "replace" || key === "scrap" || locked;
+
+      if (needsQty) {
+        if (current === "" || current === "0") {
+          qtyInput.value = baseQty;
+        }
+      } else {
+        if (current === "") {
+          qtyInput.value = "0";
+        }
+      }
+    }
+  }
+
+  function clampQty(inp) {
+    const max = parseInt(inp.getAttribute("max") || "0", 10);
+    let val = parseInt(inp.value || "0", 10);
+
+    if (isNaN(val) || val < 0) {
+      val = 0;
+    }
+    if (max && val > max) {
+      val = max;
+    }
+    inp.value = (val === 0 && inp.value.trim() === "") ? "" : val;
+  }
+
+  // Cycle helper for split layout (null → good → replace → missing → null)
+  function cycleStatus(sel) {
+    const order = ["", "reuse", "replace", "scrap"];
+    const current = sel.value || "";
+    const idx = order.indexOf(current);
+    const next = order[(idx + 1) % order.length];
+    sel.value = next;
+    sel.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    // Notes popup (both layouts)
+    document.querySelectorAll(".notes-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetId = btn.getAttribute("data-target");
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        const current = input.value || "";
+        const updated = window.prompt("Notes for this part:", current);
+        if (updated !== null) {
+          input.value = updated;
+        }
+      });
+    });
+
+    // Status selects – initialise pills
+    document.querySelectorAll(".status-select").forEach((sel) => {
+      updateDecisionRow(sel); // initial state
+      sel.addEventListener("change", () => {
+        updateDecisionRow(sel);
+      });
+    });
+
+    // Qty inputs (classic + hidden in split)
+    document.querySelectorAll(".qty-required").forEach((inp) => {
+      inp.addEventListener("input", () => {
+        clampQty(inp);
+      });
+      inp.addEventListener("blur", () => {
+        clampQty(inp);
+      });
+    });
+
+    // Split-layout specifics
+    if (window.SURVEY_LAYOUT === "split") {
+      // Single-open section + image sync
+      const detailsList = document.querySelectorAll(".split-section");
+      const imgEl = document.getElementById("split-diagram-img");
+      const captionEl = document.getElementById("split-diagram-caption-text");
+
+      detailsList.forEach((d) => {
+        d.addEventListener("toggle", () => {
+          if (d.open) {
+            // Close others
+            detailsList.forEach((other) => {
+              if (other !== d) other.open = false;
+            });
+
+            const url = d.getAttribute("data-section-img");
+            const name = d.getAttribute("data-section-name") || "Section";
+
+            if (imgEl) {
+              if (url) {
+                imgEl.src = url;
+                imgEl.style.opacity = "1";
+              } else {
+                imgEl.src = "";
+                imgEl.style.opacity = "0.4";
+              }
+            }
+            if (captionEl) {
+              captionEl.textContent = name;
+            }
+          }
+        });
+      });
+
+      // Clickable G/R/M pill → cycle status
+      document.querySelectorAll(".status-cycle").forEach((btn) => {
+        const selectId = btn.getAttribute("data-select-id");
+        const sel = document.getElementById(selectId);
+        if (!sel) return;
+
+        btn.addEventListener("click", () => {
+          if (sel.disabled) return;
+          cycleStatus(sel);
+        });
+      });
+    }
+  });
+</script>
+
+{% endblock %}

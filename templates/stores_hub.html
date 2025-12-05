@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Stores</h1>
+
+<div class="pill-row" style="margin-bottom:1rem;">
+    <a href="{{ url_for('stores_hub', view='per_engine') }}"
+       class="view-pill {% if view_mode == 'per_engine' %}pill-active{% endif %}">
+        By engine
+    </a>
+    <a href="{{ url_for('stores_hub', view='master') }}"
+       class="view-pill {% if view_mode == 'master' %}pill-active{% endif %}">
+        Master list
+    </a>
+    <a href="{{ url_for('stores_hub', view='consumables') }}"
+       class="view-pill {% if view_mode == 'consumables' %}pill-active{% endif %}">
+        Consumables
+    </a>
+</div>
+
+{% if view_mode == 'per_engine' %}
+    {# --------- Card view per template / engine --------- #}
+    {% if not templates %}
+        <p>No templates found yet. Create a template first.</p>
+    {% else %}
+        <div class="cards-grid">
+            {% for t in templates %}
+                <div class="job-card">
+                    <div class="job-card-main">
+                        <h2 class="job-card-title">
+                            {{ t.engine_type or "Engine type not set" }}
+                        </h2>
+                        <p class="job-card-sub">Template: {{ t.name }}</p>
+
+                        <div class="job-card-meta">
+                            <span class="job-pill">
+                                {{ t.engine_type or "Unknown engine" }}
+                            </span>
+                        </div>
+
+                        <div class="job-card-actions">
+                            <a href="{{ url_for('stores_for_template', template_id=t.id) }}"
+                               class="button primary">
+                                View template stores
+                            </a>
+
+                            {% if current_user.role.value == 'Admin' %}
+                                <form method="post"
+                                      action="{{ url_for('stores_seed', template_id=t.id) }}"
+                                      class="inline-form">
+                                    <button type="submit" class="button">
+                                        Seed from template
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+{% else %}
+    {# --------- Master / consumables list --------- #}
+    <div class="search-wrapper" style="margin-bottom:1rem;">
+        <input
+            type="text"
+            id="stores-master-search"
+            class="search-input"
+            placeholder="Search by engine, part number, or name…"
+        >
+    </div>
+
+    {% if not master_rows %}
+        <p>No parts found for this view.</p>
+    {% else %}
+        <div class="section-body">
+            <table class="strip-survey-table stores-table" id="stores-master-table">
+                <thead>
+                    <tr>
+                        <th>Engine</th>
+                        <th>Template</th>
+                        <th>Section</th>
+                        <th>Pos</th>
+                        <th>Part no</th>
+                        <th>Name</th>
+                        <th>Bin</th>
+                        <th>Stock</th>
+                        <th>Min</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in master_rows %}
+                        {% set low = row.qty_in_stock < row.min_stock and row.min_stock > 0 %}
+                        <tr class="master-row {% if low %}stores-low{% endif %}">
+                            <td>{{ row.engine_type }}</td>
+                            <td>{{ row.template_name }}</td>
+                            <td>{{ row.section }}</td>
+                            <td>{{ row.pos }}</td>
+                            <td>{{ row.part_no }}</td>
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.bin_location }}</td>
+                            <td>{{ row.qty_in_stock }}</td>
+                            <td>{{ row.min_stock }}</td>
+                            <td>{{ row.notes }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <script>
+      // Simple client-side filter for master list
+      document.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById("stores-master-search");
+        const rows = document.querySelectorAll("#stores-master-table tbody tr");
+        if (!input) return;
+
+        input.addEventListener("input", function () {
+          const q = input.value.trim().toLowerCase();
+          rows.forEach((row) => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = (!q || text.includes(q)) ? "" : "none";
+          });
+        });
+      });
+    </script>
+{% endif %}
+
+{% endblock %}

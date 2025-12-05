@@ -1,0 +1,830 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Parts – Job {{ job.job_number }}</h1>
+
+{# ---------------- Search bar ---------------- #}
+<div class="search-bar-wrapper" style="text-align: center; margin: 1.5rem 0;">
+    <form method="get"
+          action="{{ url_for('job_parts', job_id=job.id) }}"
+          class="search-form"
+          style="display: inline-flex; gap: 0.5rem; align-items: center;">
+        <input
+            type="text"
+            name="q"
+            class="search-input"
+            placeholder="Search parts by number or name…"
+            value="{{ search_query or '' }}"
+            style="min-width: 260px;"
+        >
+        <button type="submit" class="primary">
+            Search
+        </button>
+        {% if search_query %}
+            <a href="{{ url_for('job_parts', job_id=job.id) }}" class="search-clear">
+                Clear
+            </a>
+        {% endif %}
+    </form>
+</div>
+
+<form method="post">
+    {% set has_any_parts = (standard_parts and standard_parts|length)
+                           or (always_parts and always_parts|length)
+                           or (test_parts and test_parts|length)
+                           or (big_ticket_parts and big_ticket_parts|length)
+                           or (kit_parts_by_name and kit_parts_by_name|length) %}
+
+    {% if not has_any_parts %}
+        <p>No parts have been generated yet for this job.</p>
+    {% else %}
+
+        {# =========================
+           100% ITEMS – ALWAYS REPLACE
+           ========================= #}
+
+        {% if always_parts %}
+            <details class="survey-section" open>
+                <summary class="section-summary">
+                    100% items – always replace
+                </summary>
+                <div class="section-body">
+                    <table class="strip-survey-table parts-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 32px;"></th>
+                                <th>Part no</th>
+                                <th>Name</th>
+                                <th>Qty</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Supplier</th>
+                                <th>PO number</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for part in always_parts %}
+                            <tr class="part-row">
+                                <td class="lock-cell"></td>
+
+                                <td class="partno-cell">
+                                    <span class="partno-value">{{ part.part_no or "" }}</span>
+                                </td>
+
+                                <td class="name-cell">
+                                    {{ part.name or "" }}
+                                </td>
+
+                                <td class="qty-cell text-end">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        name="qty_{{ part.id }}"
+                                        value="{{ part.qty_required or 1 }}"
+                                        class="qty-input"
+                                    >
+                                </td>
+
+                                {# STORES-AWARE STOCK CELL #}
+                                <td class="stock-cell text-end">
+                                    {% if part.store_item %}
+                                        {% set available = part.store_item.qty_in_stock or 0 %}
+                                        {% set required = part.qty_required or 0 %}
+                                        {% if available >= required and required > 0 %}
+                                            <span class="decision-pill decision-good"
+                                                  title="Stores: {{ available }} in stock (required {{ required }})">
+                                                {{ available }}
+                                            </span>
+                                        {% elif available > 0 %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="Stores: {{ available }} available, {{ required }} required">
+                                                {{ available }}/{{ required }}
+                                            </span>
+                                        {% else %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="No stock in stores">
+                                                0
+                                            </span>
+                                        {% endif %}
+                                    {% elif store_info is defined %}
+                                        {% set si = store_info.get(part.id) %}
+                                        {% if si %}
+                                            {% set available = si.stock or 0 %}
+                                            {% set required = part.qty_required or 0 %}
+                                            {% if available >= required and required > 0 %}
+                                                <span class="decision-pill decision-good"
+                                                      title="Stores: {{ available }} in stock (required {{ required }})">
+                                                    {{ available }}
+                                                </span>
+                                            {% elif available > 0 %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="Stores: {{ available }} available, {{ required }} required">
+                                                    {{ available }}/{{ required }}
+                                                </span>
+                                            {% else %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="No stock in stores">
+                                                    0
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="status-cell">
+                                    <div class="status-wrapper">
+                                        <select
+                                            name="stock_status_{{ part.id }}"
+                                            class="status-select"
+                                            style="min-width: 140px;"
+                                        >
+                                            {% for status in StockStatusEnum %}
+                                                <option value="{{ status.value }}"
+                                                        {% if part.stock_status == status %}selected{% endif %}>
+                                                    {{ status.value }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="supplier_{{ part.id }}"
+                                        value="{{ part.supplier or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="po_number_{{ part.id }}"
+                                        value="{{ part.po_number or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="notes_{{ part.id }}"
+                                        value="{{ part.notes or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        {% endif %}
+
+        {# =========================
+           ELECTRICAL / TEST ITEMS
+           ========================= #}
+        {% if test_parts %}
+            <details class="survey-section">
+                <summary class="section-summary">
+                    Electrical / test items
+                </summary>
+                <div class="section-body">
+                    <table class="strip-survey-table parts-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 32px;"></th>
+                                <th>Part no</th>
+                                <th>Name</th>
+                                <th>Qty</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Supplier</th>
+                                <th>PO number</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for part in test_parts %}
+                            <tr class="part-row">
+                                <td class="lock-cell"></td>
+
+                                <td class="partno-cell">
+                                    <span class="partno-value">{{ part.part_no or "" }}</span>
+                                </td>
+
+                                <td class="name-cell">
+                                    {{ part.name or "" }}
+                                </td>
+
+                                <td class="qty-cell text-end">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        name="qty_{{ part.id }}"
+                                        value="{{ part.qty_required or 1 }}"
+                                        class="qty-input"
+                                    >
+                                </td>
+
+                                {# STORES-AWARE STOCK CELL #}
+                                <td class="stock-cell text-end">
+                                    {% if part.store_item %}
+                                        {% set available = part.store_item.qty_in_stock or 0 %}
+                                        {% set required = part.qty_required or 0 %}
+                                        {% if available >= required and required > 0 %}
+                                            <span class="decision-pill decision-good"
+                                                  title="Stores: {{ available }} in stock (required {{ required }})">
+                                                {{ available }}
+                                            </span>
+                                        {% elif available > 0 %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="Stores: {{ available }} available, {{ required }} required">
+                                                {{ available }}/{{ required }}
+                                            </span>
+                                        {% else %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="No stock in stores">
+                                                0
+                                            </span>
+                                        {% endif %}
+                                    {% elif store_info is defined %}
+                                        {% set si = store_info.get(part.id) %}
+                                        {% if si %}
+                                            {% set available = si.stock or 0 %}
+                                            {% set required = part.qty_required or 0 %}
+                                            {% if available >= required and required > 0 %}
+                                                <span class="decision-pill decision-good"
+                                                      title="Stores: {{ available }} in stock (required {{ required }})">
+                                                    {{ available }}
+                                                </span>
+                                            {% elif available > 0 %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="Stores: {{ available }} available, {{ required }} required">
+                                                    {{ available }}/{{ required }}
+                                                </span>
+                                            {% else %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="No stock in stores">
+                                                    0
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="status-cell">
+                                    <div class="status-wrapper">
+                                        <select
+                                            name="stock_status_{{ part.id }}"
+                                            class="status-select"
+                                            style="min-width: 140px;"
+                                        >
+                                            {% for status in StockStatusEnum %}
+                                                <option value="{{ status.value }}"
+                                                        {% if part.stock_status == status %}selected{% endif %}>
+                                                    {{ status.value }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="supplier_{{ part.id }}"
+                                        value="{{ part.supplier or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="po_number_{{ part.id }}"
+                                        value="{{ part.po_number or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="notes_{{ part.id }}"
+                                        value="{{ part.notes or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        {% endif %}
+
+        {# =========================
+           BIG-TICKET ITEMS
+           ========================= #}
+        {% if big_ticket_parts %}
+            <details class="survey-section">
+                <summary class="section-summary">
+                    Big-ticket items
+                </summary>
+                <div class="section-body">
+                    <table class="strip-survey-table parts-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 32px;"></th>
+                                <th>Part no</th>
+                                <th>Name</th>
+                                <th>Qty</th>
+                                <th>Stock</th>
+                                <th>Status</th>
+                                <th>Supplier</th>
+                                <th>PO number</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for part in big_ticket_parts %}
+                            <tr class="part-row">
+                                <td class="lock-cell"></td>
+
+                                <td class="partno-cell">
+                                    <span class="partno-value">{{ part.part_no or "" }}</span>
+                                </td>
+
+                                <td class="name-cell">
+                                    {{ part.name or "" }}
+                                </td>
+
+                                <td class="qty-cell text-end">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        name="qty_{{ part.id }}"
+                                        value="{{ part.qty_required or 1 }}"
+                                        class="qty-input"
+                                    >
+                                </td>
+
+                                {# STORES-AWARE STOCK CELL #}
+                                <td class="stock-cell text-end">
+                                    {% if part.store_item %}
+                                        {% set available = part.store_item.qty_in_stock or 0 %}
+                                        {% set required = part.qty_required or 0 %}
+                                        {% if available >= required and required > 0 %}
+                                            <span class="decision-pill decision-good"
+                                                  title="Stores: {{ available }} in stock (required {{ required }})">
+                                                {{ available }}
+                                            </span>
+                                        {% elif available > 0 %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="Stores: {{ available }} available, {{ required }} required">
+                                                {{ available }}/{{ required }}
+                                            </span>
+                                        {% else %}
+                                            <span class="decision-pill decision-replace"
+                                                  title="No stock in stores">
+                                                0
+                                            </span>
+                                        {% endif %}
+                                    {% elif store_info is defined %}
+                                        {% set si = store_info.get(part.id) %}
+                                        {% if si %}
+                                            {% set available = si.stock or 0 %}
+                                            {% set required = part.qty_required or 0 %}
+                                            {% if available >= required and required > 0 %}
+                                                <span class="decision-pill decision-good"
+                                                      title="Stores: {{ available }} in stock (required {{ required }})">
+                                                    {{ available }}
+                                                </span>
+                                            {% elif available > 0 %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="Stores: {{ available }} available, {{ required }} required">
+                                                    {{ available }}/{{ required }}
+                                                </span>
+                                            {% else %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="No stock in stores">
+                                                    0
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="status-cell">
+                                    <div class="status-wrapper">
+                                        <select
+                                            name="stock_status_{{ part.id }}"
+                                            class="status-select"
+                                            style="min-width: 140px;"
+                                        >
+                                            {% for status in StockStatusEnum %}
+                                                <option value="{{ status.value }}"
+                                                        {% if part.stock_status == status %}selected{% endif %}>
+                                                    {{ status.value }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="supplier_{{ part.id }}"
+                                        value="{{ part.supplier or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="po_number_{{ part.id }}"
+                                        value="{{ part.po_number or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="notes_{{ part.id }}"
+                                        value="{{ part.notes or '' }}"
+                                        class="notes-input"
+                                    >
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        {% endif %}
+
+        {# =========================
+           KITS
+           ========================= #}
+        {% if kit_parts_by_name %}
+            {% for kit_name, kit_parts in kit_parts_by_name.items() %}
+                <details class="survey-section">
+                    <summary class="section-summary">
+                        Kit – {{ kit_name }}
+                    </summary>
+                    <div class="section-body">
+                        <table class="strip-survey-table parts-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 32px;"></th>
+                                    <th>Part no</th>
+                                    <th>Name</th>
+                                    <th>Qty</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th>Supplier</th>
+                                    <th>PO number</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for part in kit_parts %}
+                                <tr class="part-row">
+                                    <td class="lock-cell"></td>
+
+                                    <td class="partno-cell">
+                                        <span class="partno-value">{{ part.part_no or "" }}</span>
+                                    </td>
+
+                                    <td class="name-cell">
+                                        {{ part.name or "" }}
+                                    </td>
+
+                                    <td class="qty-cell text-end">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            name="qty_{{ part.id }}"
+                                            value="{{ part.qty_required or 1 }}"
+                                            class="qty-input"
+                                        >
+                                    </td>
+
+                                    {# STORES-AWARE STOCK CELL #}
+                                    <td class="stock-cell text-end">
+                                        {% if part.store_item %}
+                                            {% set available = part.store_item.qty_in_stock or 0 %}
+                                            {% set required = part.qty_required or 0 %}
+                                            {% if available >= required and required > 0 %}
+                                                <span class="decision-pill decision-good"
+                                                      title="Stores: {{ available }} in stock (required {{ required }})">
+                                                    {{ available }}
+                                                </span>
+                                            {% elif available > 0 %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="Stores: {{ available }} available, {{ required }} required">
+                                                    {{ available }}/{{ required }}
+                                                </span>
+                                            {% else %}
+                                                <span class="decision-pill decision-replace"
+                                                      title="No stock in stores">
+                                                    0
+                                                </span>
+                                            {% endif %}
+                                        {% elif store_info is defined %}
+                                            {% set si = store_info.get(part.id) %}
+                                            {% if si %}
+                                                {% set available = si.stock or 0 %}
+                                                {% set required = part.qty_required or 0 %}
+                                                {% if available >= required and required > 0 %}
+                                                    <span class="decision-pill decision-good"
+                                                          title="Stores: {{ available }} in stock (required {{ required }})">
+                                                        {{ available }}
+                                                    </span>
+                                                {% elif available > 0 %}
+                                                    <span class="decision-pill decision-replace"
+                                                          title="Stores: {{ available }} available, {{ required }} required">
+                                                        {{ available }}/{{ required }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="decision-pill decision-replace"
+                                                          title="No stock in stores">
+                                                        0
+                                                    </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td class="status-cell">
+                                        <div class="status-wrapper">
+                                            <select
+                                                name="stock_status_{{ part.id }}"
+                                                class="status-select"
+                                                style="min-width: 140px;"
+                                            >
+                                                {% for status in StockStatusEnum %}
+                                                    <option value="{{ status.value }}"
+                                                            {% if part.stock_status == status %}selected{% endif %}>
+                                                        {{ status.value }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="supplier_{{ part.id }}"
+                                            value="{{ part.supplier or '' }}"
+                                            class="notes-input"
+                                        >
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="po_number_{{ part.id }}"
+                                            value="{{ part.po_number or '' }}"
+                                            class="notes-input"
+                                        >
+                                    </td>
+
+                                    <td>
+                                        <input
+                                            type="text"
+                                            name="notes_{{ part.id }}"
+                                            value="{{ part.notes or '' }}"
+                                            class="notes-input"
+                                        >
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            {% endfor %}
+        {% endif %}
+
+        {# =========================
+           STANDARD ITEMS – grouped
+           ========================= #}
+        {% if standard_parts %}
+            <h2 style="margin-top: 2rem;">Standard items</h2>
+
+            {% set ns = namespace(current_group=None) %}
+
+            {% for part in standard_parts %}
+                {# Group key: e.g. "TA 0100" based on section text #}
+                {% set sec_parts = (part.section or "").split(" ") %}
+                {% set group_key = (sec_parts[0] ~ " " ~ sec_parts[1]) if sec_parts|length >= 2 else (part.section or "General") %}
+
+                {% if group_key != ns.current_group %}
+                    {% if not loop.first %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </details>
+                    {% endif %}
+
+                    {% set ns.current_group = group_key %}
+
+                    <details class="survey-section">
+                        <summary class="section-summary">
+                            {{ part.section or group_key }}
+                        </summary>
+
+                        <div class="section-body">
+                            <table class="strip-survey-table parts-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 32px;"></th>
+                                        <th>Part no</th>
+                                        <th>Name</th>
+                                        <th>Qty</th>
+                                        <th>Stock</th>
+                                        <th>Status</th>
+                                        <th>Supplier</th>
+                                        <th>PO number</th>
+                                        <th>Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                {% endif %}
+
+                <tr class="part-row">
+                    <td class="lock-cell"></td>
+
+                    <td class="partno-cell">
+                        <span class="partno-value">{{ part.part_no or "" }}</span>
+                    </td>
+
+                    <td class="name-cell">
+                        {{ part.name or "" }}
+                    </td>
+
+                    <td class="qty-cell text-end">
+                        <input
+                            type="number"
+                            min="1"
+                            name="qty_{{ part.id }}"
+                            value="{{ part.qty_required or 1 }}"
+                            class="qty-input"
+                        >
+                    </td>
+
+                    {# STORES-AWARE STOCK CELL #}
+                    <td class="stock-cell text-end">
+                        {% if part.store_item %}
+                            {% set available = part.store_item.qty_in_stock or 0 %}
+                            {% set required = part.qty_required or 0 %}
+                            {% if available >= required and required > 0 %}
+                                <span class="decision-pill decision-good"
+                                      title="Stores: {{ available }} in stock (required {{ required }})">
+                                    {{ available }}
+                                </span>
+                            {% elif available > 0 %}
+                                <span class="decision-pill decision-replace"
+                                      title="Stores: {{ available }} available, {{ required }} required">
+                                    {{ available }}/{{ required }}
+                                </span>
+                            {% else %}
+                                <span class="decision-pill decision-replace"
+                                      title="No stock in stores">
+                                    0
+                                </span>
+                            {% endif %}
+                        {% elif store_info is defined %}
+                            {% set si = store_info.get(part.id) %}
+                            {% if si %}
+                                {% set available = si.stock or 0 %}
+                                {% set required = part.qty_required or 0 %}
+                                {% if available >= required and required > 0 %}
+                                    <span class="decision-pill decision-good"
+                                          title="Stores: {{ available }} in stock (required {{ required }})">
+                                        {{ available }}
+                                    </span>
+                                {% elif available > 0 %}
+                                    <span class="decision-pill decision-replace"
+                                          title="Stores: {{ available }} available, {{ required }} required">
+                                        {{ available }}/{{ required }}
+                                    </span>
+                                {% else %}
+                                    <span class="decision-pill decision-replace"
+                                          title="No stock in stores">
+                                        0
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="status-cell">
+                        <div class="status-wrapper">
+                            <select
+                                name="stock_status_{{ part.id }}"
+                                class="status-select"
+                                style="min-width: 140px;"
+                            >
+                                {% for status in StockStatusEnum %}
+                                    <option value="{{ status.value }}"
+                                            {% if part.stock_status == status %}selected{% endif %}>
+                                        {{ status.value }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            name="supplier_{{ part.id }}"
+                            value="{{ part.supplier or '' }}"
+                            class="notes-input"
+                        >
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            name="po_number_{{ part.id }}"
+                            value="{{ part.po_number or '' }}"
+                            class="notes-input"
+                        >
+                    </td>
+
+                    <td>
+                        <input
+                            type="text"
+                            name="notes_{{ part.id }}"
+                            value="{{ part.notes or '' }}"
+                            class="notes-input"
+                        >
+                    </td>
+                </tr>
+
+                {% if loop.last %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    {% endif %}
+
+    <div class="actions"
+         style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 2rem;">
+
+        <button type="button"
+                onclick="window.location='{{ url_for('job_detail', job_id=job.id) }}'">
+            &larr; Back to job
+        </button>
+
+        <button type="submit" name="action" value="issue_picklist">
+            Issue pick list
+        </button>
+
+        <button type="submit" name="action" value="save">
+            Save parts list
+        </button>
+
+        <button type="button"
+                onclick="window.location='{{ url_for('job_parts_export', job_id=job.id) }}'">
+            Export CSV
+        </button>
+
+        <button type="submit" name="action" value="move_to_build" class="primary">
+            Move to build
+        </button>
+    </div>
+</form>
+{% endblock %}

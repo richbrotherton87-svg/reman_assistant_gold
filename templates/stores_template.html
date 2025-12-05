@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Stores – {{ template.name }}</h1>
+<p class="text-muted">
+    Engine type: {{ template.engine_type or "Not set" }}
+</p>
+
+<form method="post">
+    {% if not items %}
+        <p>No template items found for this engine.</p>
+    {% else %}
+
+        {# Search bar #}
+        <div class="survey-filters">
+            <div class="search-wrapper">
+                <input
+                    type="text"
+                    id="stores-search"
+                    class="search-input"
+                    placeholder="Search by part number, name or bin…"
+                >
+            </div>
+        </div>
+
+        {% set ns = namespace(current_group=None) %}
+
+        {% for item in items %}
+            {% set section_label = item.section or "General" %}
+            {% set store = item.store_item %}
+
+            {% if section_label != ns.current_group %}
+                {# Close previous group #}
+                {% if not loop.first %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                {% endif %}
+
+                {% set ns.current_group = section_label %}
+
+                <details class="survey-section" {% if loop.first %}open{% endif %}>
+                    <summary class="section-summary">
+                        {{ section_label }}
+                    </summary>
+
+                    <div class="section-body">
+                        <table class="strip-survey-table">
+                            <thead>
+                    <tr>
+                        <th style="width: 32px;"></th>          {# lock #}
+                        <th style="width: 60px;">Pos</th>
+                        <th style="width: 170px;">Part no</th>
+                        <th style="width: 70px;">Qty</th>
+                        <th style="width: 26%;">Name</th>      {# ⬅️ shrunk again #}
+                        <th style="width: 60px;">100%</th>
+                        <th style="width: 60px;">KIT</th>
+                        <th style="width: 130px;">Bin</th>     {# ⬅️ a bit wider #}
+                        <th style="width: 90px;">Stock</th>    {# ⬅️ wider #}
+                        <th style="width: 90px;">Min</th>      {# ⬅️ wider #}
+                        <th style="width: 220px;">Notes</th>   {# ⬅️ wider #}
+                    </tr>
+                </thead>
+                            <tbody>
+            {% endif %}
+
+            <tr
+                class="part-row stores-row {% if item.always_replace %}locked-row{% endif %}"
+                data-search-text="{{ (item.part_no or '') ~ ' ' ~ (item.name or '') ~ ' ' ~ (store.bin_location if store else '') }}"
+            >
+                <td class="lock-cell">
+                    {% if item.always_replace %}
+                        <span class="lock-icon" title="Always replace">🔒</span>
+                    {% endif %}
+                </td>
+
+                <td class="pos-cell">
+                    {{ item.pos }}
+                </td>
+
+                <td class="partno-cell" style="white-space: nowrap;">
+                    {{ item.part_no }}
+                </td>
+
+                <td class="qty-cell">
+                    {{ item.qty or 1 }}
+                </td>
+
+                <td class="name-cell">
+                    {{ item.name }}
+                </td>
+
+                {# 100% indicator – purple circle #}
+                <td class="status-cell stores-flag-cell">
+                    {% if item.always_replace %}
+                        <span class="stores-dot stores-dot-100" title="Always replace"></span>
+                    {% else %}
+                        <span class="stores-dot stores-dot-empty"></span>
+                    {% endif %}
+                </td>
+
+                {# KIT indicator – orange circle #}
+                <td class="status-cell stores-flag-cell">
+                    {% if item.in_kit %}
+                        <span class="stores-dot stores-dot-kit" title="In kit"></span>
+                    {% else %}
+                        <span class="stores-dot stores-dot-empty"></span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="bin_{{ item.id }}"
+                        value="{{ store.bin_location if store and store.bin_location else '' }}"
+                        class="notes-input"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        name="stock_{{ item.id }}"
+                        value="{{ store.qty_in_stock if store and store.qty_in_stock is not none else 0 }}"
+                        class="qty-required"
+                        min="0"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="number"
+                        name="min_stock_{{ item.id }}"
+                        value="{{ store.min_stock if store and store.min_stock is not none else 0 }}"
+                        class="qty-required"
+                        min="0"
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="notes_{{ item.id }}"
+                        value="{{ store.notes if store and store.notes else '' }}"
+                        class="notes-input"
+                    >
+                </td>
+            </tr>
+
+            {% if loop.last %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <div class="actions">
+        <button
+            type="button"
+            onclick="window.location='{{ url_for('templates_list') }}'">
+            &larr; Back to templates
+        </button>
+
+        <button type="submit" class="primary">
+            Save stores
+        </button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        const input = document.getElementById("stores-search");
+        if (!input) return;
+
+        input.addEventListener("input", function () {
+            const q = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll(".stores-row");
+            const sectionMap = new Map();
+
+            rows.forEach((row) => {
+                const text =
+                    (row.getAttribute("data-search-text") || row.textContent || "")
+                        .toLowerCase();
+                const matches = !q || text.indexOf(q) !== -1;
+
+                row.style.display = matches ? "" : "none";
+
+                const details = row.closest("details");
+                if (details) {
+                    const record = sectionMap.get(details) || { hasVisible: false };
+                    if (matches) record.hasVisible = true;
+                    sectionMap.set(details, record);
+                }
+            });
+
+            // Show/hide sections, auto-open ones with hits
+            sectionMap.forEach((info, details) => {
+                if (info.hasVisible) {
+                    details.style.display = "";
+                    if (q) {
+                        details.open = true;
+                    }
+                } else {
+                    details.style.display = "none";
+                }
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

@@ -1,0 +1,28 @@
+# Python cruft
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.log
+
+# Virtual envs
+.venv/
+venv/
+
+# OS junk
+.DS_Store
+
+# Local DBs
+*.sqlite
+*.db
+instance/
+
+# Uploads (photos, diagrams)
+uploads/
+
+# VS Code
+.vscode/
+
+# Env / secrets
+.env
+*.env

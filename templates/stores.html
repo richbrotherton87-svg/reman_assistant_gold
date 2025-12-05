@@ -1,0 +1,529 @@
+{% extends "base.html" %}
+{% block content %}
+
+{# Determine current view mode, default to 'template' for backwards compatibility #}
+{% set mode = view_mode or 'template' %}
+{# who can edit? #}
+{% set can_edit_stores = current_user.role.value in ['Admin', 'Stores'] %}
+
+{# ------------------------ Title + View pills ------------------------ #}
+<div class="view-switch-bar" style="display:flex; justify-content:space-between; align-items:flex-end; gap:1rem; margin-bottom:1rem;">
+    <div>
+        {% if mode == 'master' %}
+            <h1>Stores – Master list</h1>
+        {% elif mode in ['engine', 'per_engine'] %}
+            <h1>Stores – By engine</h1>
+            <p class="text-muted">
+                One card per engine / template, with stock overview.
+            </p>
+        {% elif mode == 'consumables' %}
+            <h1>Stores – Consumables</h1>
+            <p class="text-muted">
+                All parts flagged as consumables.
+            </p>
+        {% else %}
+            <h1>Stores – {{ template.name }}</h1>
+            <p class="text-muted">
+                Engine type: {{ template.engine_type or "Not set" }}
+            </p>
+        {% endif %}
+    </div>
+
+    {# Pill bar for switching views – links use the /stores hub route #}
+    <div class="view-switch-right">
+        <a
+            href="{{ url_for('stores_hub', view='engine') }}"
+            class="view-pill {% if mode in ['engine', 'per_engine'] %}pill-active{% endif %}"
+        >
+            By engine
+        </a>
+
+        <a
+            href="{{ url_for('stores_hub', view='master') }}"
+            class="view-pill {% if mode == 'master' %}pill-active{% endif %}"
+        >
+            Master list
+        </a>
+
+        <a
+            href="{{ url_for('stores_hub', view='consumables') }}"
+            class="view-pill {% if mode == 'consumables' %}pill-active{% endif %}"
+        >
+            Consumables
+        </a>
+
+        {% if template %}
+            <a
+                href="{{ url_for('stores_for_template', template_id=template.id) }}"
+                class="view-pill {% if mode == 'template' %}pill-active{% endif %}"
+            >
+                This template
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+{# ------------------------ Top controls row ------------------------ #}
+<div class="survey-filters"
+     style="display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1rem;">
+
+    <div>
+        {# Seed button only in template-specific view and only for editors #}
+        {% if mode == 'template' and template and can_edit_stores %}
+            <form method="post"
+                  action="{{ url_for('stores_seed', template_id=template.id) }}"
+                  class="inline-form">
+                <button type="submit" class="button">
+                    Seed stores from template
+                </button>
+            </form>
+        {% endif %}
+
+        {% if mode in ['engine', 'per_engine'] and engine_types is defined and engine_types %}
+            <form method="get" action="{{ url_for('stores_hub') }}" class="inline-form" style="margin-top:0.5rem;">
+                <input type="hidden" name="view" value="engine">
+                <label>
+                    Engine:
+                    <select name="engine_type" onchange="this.form.submit()">
+                        <option value="">– All engines –</option>
+                        {% for et in engine_types %}
+                            <option value="{{ et }}"
+                                    {% if selected_engine_type == et %}selected{% endif %}>
+                                {{ et }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </form>
+        {% endif %}
+    </div>
+
+    <div class="search-wrapper">
+        <input
+            type="text"
+            id="stores-search"
+            class="search-input"
+            placeholder="Search stores by part number, name or engine…"
+        >
+    </div>
+</div>
+
+{# ======================== MASTER / ENGINE / CONSUMABLES VIEW ======================== #}
+{% if mode in ['master', 'engine', 'per_engine', 'consumables'] %}
+
+    {# --------- ENGINE CARD VIEW (one card per engine/template) --------- #}
+    {% if mode in ['engine', 'per_engine'] and engine_summaries is defined and engine_summaries %}
+        <div class="job-cards-column">
+            {% for e in engine_summaries %}
+                <section class="job-card stores-engine-card">
+                    <div class="job-card-main">
+                        <div class="job-card-header">
+                            <h2>
+                                {{ e.engine_type or e.template_name or "Unknown engine" }}
+                            </h2>
+                            {% if e.engine_type %}
+                                <span class="status-pill status-pre-survey">
+                                    {{ e.engine_type }}
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <div class="job-card-meta">
+                            <div class="job-card-row">
+                                <span class="meta-label">Template</span>
+                                <span class="meta-value">
+                                    {{ e.template_name or "—" }}
+                                </span>
+                            </div>
+                            <div class="job-card-row">
+                                <span class="meta-label">Parts in template</span>
+                                <span class="meta-value">
+                                    {{ e.total_parts or 0 }}
+                                </span>
+                            </div>
+                            <div class="job-card-row">
+                                <span class="meta-label">Total stock on hand</span>
+                                <span class="meta-value">
+                                    {{ e.total_stock or 0 }}
+                                </span>
+                            </div>
+                            <div class="job-card-row">
+                                <span class="meta-label">Lines below min</span>
+                                <span class="meta-value">
+                                    {{ e.below_min or 0 }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="job-card-actions">
+                        <a
+                            href="{{ url_for('stores_for_template', template_id=e.template_id) }}"
+                            class="button primary"
+                       >
+                           View template stores
+                       </a>
+
+                        {# Seeding is ADMIN only – Stores staff never see this #}
+                        {% if current_user.role.value == 'Admin' %}
+                            <form method="post"
+                                  action="{{ url_for('stores_seed', template_id=e.template_id) }}"
+                                  class="inline-form">
+                                <button type="submit" class="button">
+                                    Seed from template
+                               </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </section>
+            {% endfor %}
+        </div>
+
+    {# --------- MASTER & CONSUMABLES TABLE VIEW --------- #}
+    {% else %}
+        {% if not store_items %}
+            <p>No store items found for this view.</p>
+        {% else %}
+            <form method="post" action="{{ url_for('stores_update') }}">
+                <input type="hidden" name="view" value="{{ mode }}">
+                <table class="strip-survey-table stores-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 150px;">Part no</th>
+                            <th style="width: 28%;">Name</th>
+                            <th style="width: 150px;">Engine types</th>
+                            <th style="width: 100px;">Bin</th>
+                            <th style="width: 90px;">Stock</th>
+                            <th style="width: 90px;">Min</th>
+                            <th style="width: 80px;">Consumable</th>
+                            <th style="width: 220px;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in store_items %}
+                           {% set tpl = s.template_item %}
+                           {% set engines = s.engine_types or [] %}
+
+                           <tr class="stores-row stores-master-row">
+                              <td class="partno-cell" style="white-space:nowrap;">
+                                    {{ tpl.part_no if tpl else "" }}
+                              </td>
+                             <td class="name-cell">
+                                  <span class="name-text"
+                                        style="display:inline-block;
+                                                max-width:260px;
+                                               white-space:nowrap;
+                                               overflow:hidden;
+                                                text-overflow:ellipsis;">
+                                      {{ tpl.name if tpl else "" }}
+                                  </span>
+                              </td>
+                             <td class="engine-cell small">
+                                   {% if engines %}
+                                     {{ engines | join(', ') }}
+                                    {% else %}
+                                       —
+                                      {% endif %}
+                              </td>
+        
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="bin_{{ s.id }}"
+                                        value="{{ s.bin_location or '' }}"
+                                        class="notes-input"
+                                        {% if not can_edit_stores %}readonly{% endif %}
+                                    >
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="stock_{{ s.id }}"
+                                        value="{{ s.qty_in_stock or 0 }}"
+                                        class="qty-required"
+                                        min="0"
+                                        {% if not can_edit_stores %}readonly{% endif %}
+                                    >
+                                </td>
+                                <td>
+                                    <input
+                                        type="number"
+                                        name="min_stock_{{ s.id }}"
+                                        value="{{ s.min_stock or 0 }}"
+                                        class="qty-required"
+                                        min="0"
+                                        {% if not can_edit_stores %}readonly{% endif %}
+                                    >
+                                </td>
+                                <td style="text-align:center;">
+                                    <input
+                                        type="checkbox"
+                                        name="consumable_{{ s.id }}"
+                                        value="1"
+                                        {% if s.is_consumable %}checked{% endif %}
+                                        {% if not can_edit_stores %}disabled{% endif %}
+                                    >
+                                </td>
+                                <td>
+                                    <input
+                                        type="text"
+                                        name="notes_{{ s.id }}"
+                                        value="{{ s.notes or '' }}"
+                                        class="notes-input"
+                                        {% if not can_edit_stores %}readonly{% endif %}
+                                    >
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+
+                <div class="actions" style="margin-top:1.5rem;">
+                    {% if can_edit_stores %}
+                        <button type="submit" class="primary">
+                            Save stores
+                        </button>
+                    {% endif %}
+                </div>
+            </form>
+        {% endif %}
+    {% endif %}
+
+{# ======================== TEMPLATE-SPECIFIC VIEW ======================== #}
+{% else %}
+
+<form method="post">
+    {% if not items %}
+        <p>No template items found for this engine.</p>
+    {% else %}
+        {% set ns = namespace(current_group=None) %}
+
+        {% for item in items %}
+            {% set parts = (item.section or "").split(" ") %}
+            {% set group_key = (parts[0] ~ " " ~ parts[1]) if parts|length >= 2 else (item.section or "General") %}
+
+            {% set store = item.store_item %}
+            {% if not store %}
+                {% set store = {
+                    "bin_location": "",
+                    "qty_in_stock": 0,
+                    "min_stock": 0,
+                    "notes": ""
+                } %}
+            {% endif %}
+
+            {% if group_key != ns.current_group %}
+                {% if not loop.first %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+                {% endif %}
+
+                {% set ns.current_group = group_key %}
+
+                <details class="survey-section" {% if loop.first %}open{% endif %}>
+                    <summary class="section-summary">
+                        {{ item.section or group_key }}
+                    </summary>
+
+                    <div class="section-body">
+                        <table class="strip-survey-table stores-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 36px;"></th>
+                                    <th style="width: 60px;">Pos</th>
+                                    <th style="width: 130px;">Part no</th>
+                                    <th style="width: 70px;">Qty<br>(template)</th>
+                                    <th style="width: 26%;">Name</th>
+                                    <th style="width: 50px;">100%</th>
+                                    <th style="width: 60px;">KIT</th>
+                                    <th style="width: 110px;">Bin</th>
+                                    <th style="width: 90px;">Stock</th>
+                                    <th style="width: 90px;">Min</th>
+                                    <th style="width: 210px;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+            {% endif %}
+
+            <tr class="part-row stores-row">
+                <td class="lock-cell">
+                    {% if item.always_replace %}
+                        <span class="lock-icon" title="Always replace">🔒</span>
+                    {% endif %}
+                </td>
+
+                <td class="pos-cell">{{ item.pos }}</td>
+
+                <td class="partno-cell" style="white-space:nowrap;">
+                    {{ item.part_no }}
+                </td>
+
+                <td class="qty-cell">
+                    {{ item.qty or 1 }}
+                </td>
+
+                <td class="name-cell">
+                    <span class="name-text"
+                          style="display:inline-block;
+                                 max-width:330px;
+                                 white-space:nowrap;
+                                 overflow:hidden;
+                                 text-overflow:ellipsis;">
+                        {{ item.name }}
+                    </span>
+                </td>
+
+                <td class="status-cell" style="text-align:center;">
+                    {% if item.always_replace %}
+                        <span class="decision-pill decision-replace"
+                              title="Always replaced on strip">
+                        </span>
+                    {% else %}
+                        <span class="decision-pill decision-none"></span>
+                    {% endif %}
+                </td>
+
+                <td class="status-cell" style="text-align:center;">
+                    {% if item.in_kit %}
+                        <span class="decision-pill decision-good"
+                              title="Supplied as part of a kit">
+                        </span>
+                    {% else %}
+                        <span class="decision-pill decision-none"></span>
+                    {% endif %}
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="bin_{{ item.id }}"
+                        value="{{ store.bin_location or '' }}"
+                        class="notes-input"
+                        {% if not can_edit_stores %}readonly{% endif %}
+                    >
+                </td>
+                <td>
+                    <input
+                        type="number"
+                        name="stock_{{ item.id }}"
+                        value="{{ store.qty_in_stock or 0 }}"
+                        class="qty-required"
+                        min="0"
+                        {% if not can_edit_stores %}readonly{% endif %}
+                    >
+                </td>
+                <td>
+                    <input
+                        type="number"
+                        name="min_stock_{{ item.id }}"
+                        value="{{ store.min_stock or 0 }}"
+                        class="qty-required"
+                        min="0"
+                        {% if not can_edit_stores %}readonly{% endif %}
+                    >
+                </td>
+
+                <td>
+                    <input
+                        type="text"
+                        name="notes_{{ item.id }}"
+                        value="{{ store.notes or '' }}"
+                        class="notes-input"
+                        {% if not can_edit_stores %}readonly{% endif %}
+                    >
+                </td>
+            </tr>
+
+            {% if loop.last %}
+                            </tbody>
+                        </table>
+                    </div>
+                </details>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    <div class="actions" style="margin-top:1.5rem;">
+        <button type="button"
+                onclick="window.location='{{ url_for('templates_list') }}'">
+            &larr; Back to templates
+        </button>
+
+        {% if can_edit_stores %}
+            <button type="submit" class="primary">
+                Save stores
+            </button>
+        {% endif %}
+    </div>
+</form>
+
+{% endif %}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const input = document.getElementById("stores-search");
+        if (!input) return;
+
+        input.addEventListener("input", function () {
+            const query = input.value.trim().toLowerCase();
+
+            const cards = document.querySelectorAll(".stores-engine-card");
+            if (cards.length) {
+                cards.forEach((card) => {
+                    const titleEl = card.querySelector("h2");
+                    const txt = (titleEl ? titleEl.textContent : "").toLowerCase();
+                    const match = !query || txt.includes(query);
+                    card.style.display = match ? "" : "none";
+                });
+                return;
+            }
+
+            const masterRows = document.querySelectorAll(".stores-master-row");
+            if (masterRows.length) {
+                masterRows.forEach((row) => {
+                    const pnCell = row.querySelector(".partno-cell");
+                    const nameCell = row.querySelector(".name-cell");
+
+                    const pn = (pnCell ? pnCell.textContent : "").toLowerCase();
+                    const nm = (nameCell ? nameCell.textContent : "").toLowerCase();
+
+                    const match = !query || pn.includes(query) || nm.includes(query);
+                    row.style.display = match ? "" : "none";
+                });
+                return;
+            }
+
+            const sections = document.querySelectorAll(".survey-section");
+
+            sections.forEach((section) => {
+                let anyMatch = false;
+                const rows = section.querySelectorAll("tr.stores-row");
+
+                rows.forEach((row) => {
+                    const pnCell = row.querySelector(".partno-cell");
+                    const nameCell = row.querySelector(".name-cell");
+
+                    const pn = (pnCell ? pnCell.textContent : "").toLowerCase();
+                    const nm = (nameCell ? nameCell.textContent : "").toLowerCase();
+
+                    const match = !query || pn.includes(query) || nm.includes(query);
+                    row.style.display = match ? "" : "none";
+                    if (match) anyMatch = true;
+                });
+
+                if (!query) {
+                    section.style.display = "";
+                } else {
+                    section.style.display = anyMatch ? "" : "none";
+                    if (anyMatch) {
+                        section.open = true;
+                    }
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>100% replacement parts – {{ template.name }}</h1>
+
+<p class="help-text">
+    Tick the parts that are <strong>always replaced</strong> during a reman.
+    These will appear locked in the technician strip survey and default to
+    <strong>Replace</strong>.
+</p>
+
+<form method="post">
+    <div class="card">
+        {% if items %}
+            <table class="strip-survey-table">
+                <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th>Pos</th>
+                        <th>Part no</th>
+                        <th>Name</th>
+                        <th>Qty</th>
+                        <th style="text-align:center;">100% replace</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                        <tr>
+                            <td>{{ item.section }}</td>
+                            <td>{{ item.pos }}</td>
+                            <td>{{ item.part_no }}</td>
+                            <td>{{ item.name }}</td>
+                            <td>{{ item.qty }}</td>
+                            <td style="text-align:center;">
+                                <input
+                                    type="checkbox"
+                                    name="lock_ids"
+                                    value="{{ item.id }}"
+                                    {% if item.always_replace %}checked{% endif %}
+                                >
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No lines in this template yet.</p>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="primary">Save 100% replace flags</button>
+        <a class="button" href="{{ url_for('templates_list') }}">Back to templates</a>
+        <a class="button" href="{{ url_for('template_edit', template_id=template.id) }}">
+            Edit template lines
+        </a>
+    </div>
+</form>
+{% endblock %}
